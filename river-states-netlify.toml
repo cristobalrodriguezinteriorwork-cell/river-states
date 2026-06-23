@@ -1,8 +1,0 @@
-[build]
-  publish = "."
-
-[[redirects]]
-  from = "/monday-file"
-  to = "https://api.monday.com/v2/file"
-  status = 200
-  force = true
