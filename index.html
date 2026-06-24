@@ -36,42 +36,44 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
 .setup-logo-fallback { font-size: 48px; margin-bottom: 12px; }
 .setup-title { color: #fff; font-size: 22px; font-weight: 700; text-align: center; margin-bottom: 2px; }
 .setup-brand { color: rgba(255,255,255,0.6); font-size: 13px; text-align: center; margin-bottom: 24px; letter-spacing: 1px; text-transform: uppercase; }
-.setup-version { color: rgba(255,255,255,0.3); font-size: 11px; margin-top: 6px; }
-.setup-card { background: rgba(255,255,255,0.10); border-radius: var(--radius); padding: 24px; width: 100%; max-width: 380px; }
-.setup-card label { color: rgba(255,255,255,0.8); font-size: 13px; display: block; margin-bottom: 8px; }
-.setup-input { width: 100%; padding: 12px 14px; border-radius: 10px; border: none; font-size: 15px; background: rgba(255,255,255,0.15); color: #fff; outline: none; }
-.setup-input::placeholder { color: rgba(255,255,255,0.4); }
-.setup-btn { width: 100%; margin-top: 14px; padding: 13px; border-radius: 10px; border: none; background: #fff; color: var(--brand); font-size: 15px; font-weight: 700; cursor: pointer; }
+.setup-card { background: #fff; border-radius: var(--radius); padding: 24px; width: 100%; max-width: 360px; }
+.setup-card label { font-size: 13px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+.setup-card input { width: 100%; border: 1.5px solid #e5e7eb; border-radius: 10px; padding: 12px 14px; font-size: 14px; color: var(--text); outline: none; }
+.setup-card input:focus { border-color: var(--brand-mid); }
+.btn-primary { width: 100%; background: var(--brand); color: #fff; border: none; border-radius: 10px; padding: 14px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 16px; }
 
 /* ── Roles ── */
-#screen-roles { background: var(--brand); display: flex; flex-direction: column; }
-.roles-header { padding: 52px 20px 20px; display: flex; align-items: center; gap: 14px; }
+#screen-roles { background: var(--brand); padding: 0; }
+.roles-header { padding: 48px 24px 20px; display: flex; align-items: center; gap: 14px; }
 .roles-header-logo { width: 48px; height: 48px; object-fit: contain; border-radius: 8px; flex-shrink: 0; }
-.roles-header-info h1 { color: #fff; font-size: 20px; font-weight: 800; }
-.roles-header-info p  { color: rgba(255,255,255,0.6); font-size: 13px; margin-top: 2px; }
-.roles-grid { flex: 1; overflow-y: auto; padding: 0 16px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.role-card { background: rgba(255,255,255,0.10); border-radius: var(--radius); padding: 20px 14px; display: flex; flex-direction: column; align-items: center; gap: 8px; border: none; cursor: pointer; color: #fff; text-align: center; transition: background 0.15s; }
-.role-card:active { background: rgba(255,255,255,0.20); }
-.role-icon { font-size: 28px; }
-.role-name { font-size: 13px; font-weight: 700; letter-spacing: 0.3px; }
-.role-sub  { font-size: 11px; opacity: 0.6; }
-.roles-footer { padding: 0 16px 32px; }
-.roles-config-btn { width: 100%; padding: 10px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; color: rgba(255,255,255,0.5); font-size: 13px; cursor: pointer; }
+.roles-header-text h1 { color: #fff; font-size: 22px; font-weight: 800; }
+.roles-header-text p  { color: rgba(255,255,255,0.6); font-size: 13px; margin-top: 2px; }
+.roles-grid { background: var(--bg); flex: 1; border-radius: 24px 24px 0 0; padding: 24px 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-content: start; overflow-y: auto; }
+.role-card { background: var(--card); border-radius: var(--radius); padding: 24px 16px; display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; box-shadow: var(--shadow); border: 2px solid transparent; transition: transform 0.15s; }
+.role-card:active { transform: scale(0.97); }
+.role-icon { font-size: 36px; }
+.role-name { font-size: 13px; font-weight: 700; text-align: center; color: var(--text); }
+.role-sub  { font-size: 11px; color: var(--text-muted); text-align: center; }
+.role-card.taller      { border-color: var(--brand-mid); }
+.role-card.inst-cocina { border-color: var(--green); }
+.role-card.inst-tope   { border-color: var(--orange); }
+.role-card.encargado   { border-color: var(--red); }
 
-/* ── PIN ── */
-#screen-pin { background: var(--brand); align-items: center; justify-content: center; padding: 32px 24px; }
-.pin-title    { color: rgba(255,255,255,0.7); font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
-.pin-role     { color: #fff; font-size: 20px; font-weight: 700; margin-bottom: 28px; }
-.pin-dots     { display: flex; gap: 14px; margin-bottom: 28px; }
-.pin-dot      { width: 16px; height: 16px; border-radius: 50%; background: rgba(255,255,255,0.2); transition: background 0.15s; }
-.pin-dot.filled { background: #fff; }
-.pin-dot.error  { background: var(--red); }
-.pin-error    { color: var(--red); font-size: 13px; height: 18px; margin-bottom: 12px; }
-.pin-numpad   { display: grid; grid-template-columns: repeat(3, 64px); gap: 12px; }
-.pin-key      { width: 64px; height: 64px; border-radius: 50%; background: rgba(255,255,255,0.12); border: none; color: #fff; font-size: 22px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.12s; }
+/* ── PIN Screen ── */
+#screen-pin { background: var(--brand); align-items: center; justify-content: flex-start; padding-top: 60px; }
+.pin-back { position: absolute; top: 48px; left: 16px; background: rgba(255,255,255,0.15); border: none; color: #fff; width: 36px; height: 36px; border-radius: 50%; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.pin-role-label { color: rgba(255,255,255,0.7); font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+.pin-role-name  { color: #fff; font-size: 22px; font-weight: 700; margin-bottom: 32px; }
+.pin-dots { display: flex; gap: 16px; margin-bottom: 40px; }
+.pin-dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.5); background: transparent; transition: background 0.15s; }
+.pin-dot.filled { background: #fff; border-color: #fff; }
+.pin-dot.error  { background: var(--red); border-color: var(--red); }
+.pin-pad { display: grid; grid-template-columns: repeat(3, 72px); gap: 14px; }
+.pin-key { width: 72px; height: 72px; border-radius: 50%; border: none; background: rgba(255,255,255,0.12); color: #fff; font-size: 24px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.1s; }
 .pin-key:active { background: rgba(255,255,255,0.28); }
-.pin-key.del  { font-size: 18px; }
-.pin-back     { margin-top: 20px; background: none; border: none; color: rgba(255,255,255,0.5); font-size: 14px; cursor: pointer; padding: 8px 16px; }
+.pin-key.del { font-size: 18px; }
+.pin-key.empty { background: transparent; pointer-events: none; }
+.pin-error-msg { color: rgba(255,100,100,0.9); font-size: 14px; margin-top: 16px; min-height: 20px; }
 
 /* ── App Header ── */
 .app-header { background: var(--brand); color: #fff; padding: 48px 16px 14px; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
@@ -85,77 +87,51 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ── Units ── */
-#screen-units { display: flex; flex-direction: column; }
-.units-search { padding: 10px 16px 6px; flex-shrink: 0; }
-.units-search input { width: 100%; padding: 10px 14px; border-radius: 10px; border: 1.5px solid #e5e7eb; background: #fff; font-size: 15px; outline: none; }
-.units-stats { display: flex; gap: 8px; padding: 8px 16px; flex-shrink: 0; overflow-x: auto; }
-.stat-chip { background: #fff; border-radius: 20px; padding: 6px 12px; display: flex; gap: 6px; align-items: center; white-space: nowrap; box-shadow: var(--shadow); cursor: pointer; border: 2px solid transparent; flex-shrink: 0; }
-.stat-chip.chip-active { border-color: var(--brand-mid); }
-.stat-n { font-size: 15px; font-weight: 700; }
-.stat-l { font-size: 12px; color: var(--text-muted); }
-.filter-bar { display: flex; gap: 8px; padding: 4px 16px 8px; flex-shrink: 0; }
-.filter-pill { padding: 6px 14px; border-radius: 20px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; }
-.filter-pill.active   { background: var(--brand); color: #fff; }
-.filter-pill.inactive { background: #e5e7eb; color: var(--text-muted); }
-.units-list { flex: 1; overflow-y: auto; padding: 8px 16px 24px; display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 8px; align-content: start; }
-.unit-btn { background: #fff; border: none; border-radius: 10px; padding: 8px 4px; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; box-shadow: var(--shadow); position: relative; }
-.unit-btn.status-done     { background: #d1fae5; }
-.unit-btn.status-progress { background: #fef3c7; }
-.unit-btn.has-issue       { box-shadow: 0 0 0 2px var(--orange); }
-.u-icon { font-size: 16px; }
-.u-num  { font-size: 13px; font-weight: 700; }
-.u-label { font-size: 9px; color: var(--text-muted); text-align: center; line-height: 1.2; }
-.u-warn { position: absolute; top: 2px; right: 2px; font-size: 10px; }
+.units-search { padding: 12px 16px; background: var(--brand); }
+.units-search input { width: 100%; background: rgba(255,255,255,0.15); border: none; border-radius: 10px; padding: 10px 14px; color: #fff; font-size: 14px; outline: none; }
+.units-search input::placeholder { color: rgba(255,255,255,0.55); }
+.units-stats { display: flex; gap: 8px; padding: 10px 16px; background: var(--brand); }
+.stat-chip { flex: 1; background: rgba(255,255,255,0.12); border-radius: 8px; padding: 6px 8px; text-align: center; cursor: pointer; border: 2px solid transparent; transition: all 0.15s; }
+.stat-chip.chip-active { background: rgba(255,255,255,0.28); border-color: rgba(255,255,255,0.55); }
+.stat-chip .stat-n { font-size: 18px; font-weight: 700; color: #fff; display: block; }
+.stat-chip .stat-l { font-size: 10px; color: rgba(255,255,255,0.65); }
+.filter-bar { display: flex; gap: 8px; padding: 8px 12px 0; background: var(--brand); }
+.filter-pill { border: none; border-radius: 20px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.filter-pill.active   { background: #fff; color: var(--brand); }
+.filter-pill.inactive { background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.8); }
+.units-list { flex: 1; overflow-y: auto; padding: 12px; background: var(--bg); border-radius: 20px 20px 0 0; margin-top: -2px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; align-content: start; }
+.unit-btn { aspect-ratio: 1; border: none; border-radius: 10px; cursor: pointer; font-size: 11px; font-weight: 700; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; transition: transform 0.1s; }
+.unit-btn:active { transform: scale(0.93); }
+.unit-btn .u-num  { font-size: 13px; font-weight: 800; }
+.unit-btn .u-icon { font-size: 14px; }
+.unit-btn .u-warn { font-size: 10px; }
+.unit-btn.status-done     { background: #d1fae5; color: #065f46; }
+.unit-btn.status-progress { background: #fef3c7; color: #92400e; }
+.unit-btn.status-pending  { background: #f3f4f6; color: #6b7280; }
+.unit-btn.has-issue { outline: 2px solid #df2f4a; outline-offset: -2px; }
 
 /* ── Detail ── */
-#screen-detail { display: flex; flex-direction: column; }
-.detail-body { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
-.action-footer { padding: 12px 16px 32px; background: #fff; border-top: 1px solid #e5e7eb; display: flex; flex-direction: column; gap: 8px; }
-.btn-action { width: 100%; padding: 15px; border-radius: 12px; border: none; font-size: 16px; font-weight: 700; cursor: pointer; color: #fff; }
-.btn-action.taller      { background: #6c5ce7; }
-.btn-action.inst-cocina { background: var(--brand-mid); }
-.btn-action.inst-tope   { background: #00b894; }
-.btn-action.encargado   { background: var(--green); }
-.btn-action:disabled    { background: #c4c4c4; }
-.btn-undo { width: 100%; padding: 10px; border-radius: 10px; border: 1.5px solid var(--red); background: #fff; color: var(--red); font-size: 14px; font-weight: 600; cursor: pointer; }
-
-/* ── Detail Cards ── */
-.detail-status-card { background: #fff; border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); }
+.detail-body { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+.detail-status-card { background: var(--card); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
 .detail-status-card h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 12px; font-weight: 600; }
-.unit-label-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-bottom: 10px; }
-.label-3br-izq { background: #ffadad; color: #7b0000; }
-.label-4br-izq { background: #225091; color: #fff; }
-.label-4br-der { background: #401694; color: #fff; }
-.label-3br-der { background: #ff5ac4; color: #fff; }
-.status-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid #f3f4f6; }
+.status-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f3f4f6; }
 .status-row:last-child { border-bottom: none; }
 .status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 .status-dot.done     { background: var(--green); }
 .status-dot.progress { background: var(--orange); }
 .status-dot.pending  { background: var(--grey); }
-.status-label { font-size: 13px; color: var(--text-muted); flex: 1; }
-.status-val   { font-size: 13px; font-weight: 600; }
+.status-label { font-size: 14px; color: var(--text); flex: 1; }
+.status-val   { font-size: 12px; color: var(--text-muted); font-weight: 500; }
 
 /* ── Photos ── */
-.photos-card { background: #fff; border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); }
+.photos-card { background: var(--card); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
 .photos-card h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 12px; font-weight: 600; }
-.photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.photo-thumb { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; cursor: pointer; }
-.photo-thumb.uploading { opacity: 0.5; }
-.photo-thumb.upload-error { border: 2px solid var(--red); }
-.photo-add { width: 100%; aspect-ratio: 1; border-radius: 8px; background: var(--brand-light); border: 2px dashed var(--brand-mid); display: flex; align-items: center; justify-content: center; font-size: 28px; color: var(--brand-mid); cursor: pointer; }
-.photo-loading { width: 100%; aspect-ratio: 1; border-radius: 8px; background: #f3f4f6; display: flex; align-items: center; justify-content: center; font-size: 20px; }
-
-/* ── Issues ── */
-.issue-card { background: #fff; border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); }
-.issue-card h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 12px; font-weight: 600; }
-.issue-existing { background: #fff7ed; border: 1px solid var(--orange); border-radius: 8px; padding: 10px; font-size: 13px; margin-bottom: 10px; }
-.issue-actions-row { display: flex; gap: 8px; margin-bottom: 10px; }
-.btn-issue-sm { flex: 1; padding: 8px; border-radius: 8px; border: none; font-size: 12px; font-weight: 600; cursor: pointer; }
-.btn-clear   { background: #fee2e2; color: var(--red); }
-.btn-resolve { background: #d1fae5; color: #065f46; }
-.issue-textarea { width: 100%; min-height: 80px; border: 1.5px solid #e5e7eb; border-radius: 10px; padding: 10px; font-size: 14px; font-family: inherit; resize: none; outline: none; }
-.btn-issue { width: 100%; margin-top: 10px; padding: 12px; border-radius: 10px; border: none; background: var(--orange); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; }
+.photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+.photo-thumb { width: 100%; aspect-ratio: 1; border-radius: 8px; object-fit: cover; cursor: pointer; display: block; }
+.photo-thumb.uploading    { opacity: 0.45; pointer-events: none; }
+.photo-thumb.upload-error { opacity: 0.45; outline: 2px solid var(--red); }
+.photo-add     { aspect-ratio: 1; border-radius: 8px; background: var(--brand-light); border: 2px dashed var(--brand-mid); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--brand-mid); font-size: 28px; }
+.photo-loading { aspect-ratio: 1; border-radius: 8px; background: #f3f4f6; display: flex; align-items: center; justify-content: center; font-size: 20px; }
 
 /* ── Signature ── */
 .sig-card { background: var(--card); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
@@ -169,38 +145,61 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
 .sig-canvas-wrap { border: 2px solid var(--brand-mid); border-radius: 10px; overflow: hidden; background: #fafafa; display: none; }
 #sig-canvas { display: block; width: 100%; touch-action: none; cursor: crosshair; }
 .sig-actions { display: flex; gap: 8px; margin-top: 10px; }
-.btn-outline { flex: 1; background: #fff; border: 1.5px solid var(--brand-mid); color: var(--brand); border-radius: 8px; padding: 10px; font-size: 14px; cursor: pointer; font-weight: 600; }
+.btn-outline  { flex: 1; background: transparent; border: 1.5px solid #e5e7eb; border-radius: 8px; padding: 10px; font-size: 14px; cursor: pointer; color: var(--text-muted); font-weight: 600; }
 .btn-confirm-sig { flex: 2; background: var(--green); border: none; border-radius: 8px; padding: 10px; font-size: 14px; cursor: pointer; color: #fff; font-weight: 700; }
 
-/* ── Photo Modal ── */
-.photo-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 999; }
-.photo-modal.show { display: flex; }
-.photo-modal img { max-width: 95vw; max-height: 90vh; border-radius: 8px; object-fit: contain; }
-.photo-modal-close { position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); border: none; color: #fff; width: 40px; height: 40px; border-radius: 50%; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+/* ── Issues ── */
+.issue-card { background: #fff8f0; border: 1.5px solid var(--orange); border-radius: var(--radius); padding: 20px; }
+.issue-card h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; color: #92400e; margin-bottom: 8px; font-weight: 600; }
+.issue-existing { background: #fff3cd; border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; font-size: 13px; color: #7c5a00; line-height: 1.5; }
+.issue-existing strong { display: block; font-size: 11px; color: #92400e; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.4px; }
+.issue-actions-row { display: flex; gap: 8px; margin-bottom: 12px; }
+.btn-issue-sm { flex: 1; border: none; border-radius: 8px; padding: 9px; font-size: 13px; font-weight: 700; cursor: pointer; }
+.btn-clear   { background: #e5e7eb; color: #374151; }
+.btn-resolve { background: var(--green); color: #fff; }
+.issue-textarea { width: 100%; border: 1.5px solid var(--orange); border-radius: 10px; padding: 12px; font-size: 14px; font-family: inherit; resize: vertical; min-height: 80px; outline: none; color: var(--text); background: #fff; }
+.btn-issue { width: 100%; background: var(--orange); color: #fff; border: none; border-radius: 10px; padding: 12px; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 10px; }
 
-/* ── Toast & Loading ── */
-.toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.82); color: #fff; padding: 10px 20px; border-radius: 24px; font-size: 14px; white-space: nowrap; opacity: 0; transition: opacity 0.25s; pointer-events: none; z-index: 998; max-width: 90vw; white-space: normal; text-align: center; }
-.toast.show { opacity: 1; }
-.loading { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: none; align-items: center; justify-content: center; z-index: 997; flex-direction: column; gap: 14px; }
-.loading.show { display: flex; }
-.loading-spinner { width: 44px; height: 44px; border: 4px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; }
-.loading-text { color: #fff; font-size: 14px; font-weight: 600; }
+/* ── Action Footer ── */
+.action-footer { padding: 16px; background: var(--card); border-top: 1px solid #f0f0f0; flex-shrink: 0; }
+.btn-action { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; transition: opacity 0.15s, transform 0.1s; }
+.btn-action:active { opacity: 0.85; transform: scale(0.98); }
+.btn-action.taller      { background: var(--brand); color: #fff; }
+.btn-action.inst-cocina { background: var(--green); color: #fff; }
+.btn-action.inst-tope   { background: var(--orange); color: #fff; }
+.btn-action.encargado   { background: var(--red); color: #fff; }
+.btn-action:disabled    { opacity: 0.4; cursor: not-allowed; }
+.btn-undo { width: 100%; background: transparent; border: 1.5px solid #e5e7eb; color: var(--text-muted); border-radius: 10px; padding: 10px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 8px; }
+
+/* ── Overlays ── */
+#toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(80px); background: #1a1a2e; color: #fff; padding: 12px 20px; border-radius: 24px; font-size: 14px; font-weight: 500; transition: transform 0.3s ease; z-index: 1000; white-space: nowrap; pointer-events: none; max-width: 90vw; white-space: normal; text-align: center; }
+#toast.show { transform: translateX(-50%) translateY(0); }
+#loading { position: fixed; inset: 0; background: rgba(31,56,100,0.85); display: none; align-items: center; justify-content: center; z-index: 999; flex-direction: column; gap: 16px; }
+#loading.show { display: flex; }
+.spinner { width: 44px; height: 44px; border: 4px solid rgba(255,255,255,0.2); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; }
+#loading p { color: #fff; font-size: 15px; font-weight: 500; }
+#photo-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.92); display: none; align-items: center; justify-content: center; z-index: 998; }
+#photo-modal.show { display: flex; }
+#photo-modal img { max-width: 95vw; max-height: 90vh; border-radius: 8px; object-fit: contain; }
+#photo-modal-close { position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.2); border: none; color: #fff; width: 40px; height: 40px; border-radius: 50%; font-size: 20px; cursor: pointer; }
+
+@media (min-width: 480px) { .units-list { grid-template-columns: repeat(8, 1fr); } }
 </style>
 </head>
 <body>
 
 <!-- ── Setup ─────────────────────────────────────────────────── -->
-<div id="screen-setup" class="screen active">
-  <img src="logo.png" class="setup-logo" onerror="this.style.display='none';document.getElementById('setup-fallback').style.display='block'">
-  <div id="setup-fallback" class="setup-logo-fallback" style="display:none">🏗️</div>
+<div id="screen-setup" class="screen">
+  <img src="logo.png" class="setup-logo" onerror="this.style.display='none';document.getElementById('logo-fallback').style.display='block'">
+  <div id="logo-fallback" class="setup-logo-fallback" style="display:none">🏗️</div>
   <div class="setup-title">River States</div>
   <div class="setup-brand">Wood Studio</div>
-  <div class="setup-version">v1</div>
-  <div class="setup-card" style="margin-top:20px">
+  <div style="color:rgba(255,255,255,0.35);font-size:10px;margin-top:-18px;margin-bottom:18px;">v1</div>
+  <div class="setup-card">
     <label>Token API de Monday.com</label>
-    <input id="api-token-input" class="setup-input" type="password" placeholder="eyJhbGci..." autocomplete="off">
-    <button class="setup-btn" onclick="saveToken()">Conectar</button>
-    <p style="color:rgba(255,255,255,0.4);font-size:11px;margin-top:10px;text-align:center">El token se guarda en este dispositivo.</p>
+    <input type="password" id="api-token-input" placeholder="eyJhbGciOiJ..." autocomplete="off">
+    <button class="btn-primary" onclick="saveToken()">Conectar</button>
+    <p style="font-size:11px;color:#9ca3af;margin-top:12px;text-align:center;">El token se guarda en este dispositivo.</p>
   </div>
 </div>
 
@@ -208,50 +207,42 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
 <div id="screen-roles" class="screen">
   <div class="roles-header">
     <img src="logo.png" class="roles-header-logo" onerror="this.style.display='none'">
-    <div class="roles-header-info">
+    <div class="roles-header-text">
       <h1>River States</h1>
       <p>Wood Studio · Selecciona tu rol</p>
     </div>
   </div>
   <div class="roles-grid">
-    <button class="role-card" onclick="goToPin('taller')">
-      <span class="role-icon">📐</span>
-      <span class="role-name">TALLER</span>
-      <span class="role-sub">Medidas</span>
-    </button>
-    <button class="role-card" onclick="goToPin('instaladorCocina')">
-      <span class="role-icon">🏠</span>
-      <span class="role-name">INST. COCINAS</span>
-      <span class="role-sub">Entrega Cocina</span>
-    </button>
-    <button class="role-card" onclick="goToPin('instaladorTope')">
-      <span class="role-icon">🪨</span>
-      <span class="role-name">INST. TOPES</span>
-      <span class="role-sub">Countertops</span>
-    </button>
-    <button class="role-card" onclick="goToPin('encargado')">
-      <span class="role-icon">✅</span>
-      <span class="role-name">ENCARGADO</span>
-      <span class="role-sub">Aprobación final</span>
-    </button>
-  </div>
-  <div class="roles-footer">
-    <button class="roles-config-btn" onclick="showSetup()">⚙️ Configuración</button>
+    <div class="role-card taller"      onclick="goToPin('taller')">
+      <div class="role-icon">📐</div><div class="role-name">TALLER</div><div class="role-sub">Medidas</div>
+    </div>
+    <div class="role-card inst-cocina" onclick="goToPin('instaladorCocina')">
+      <div class="role-icon">🏠</div><div class="role-name">INST. COCINAS</div><div class="role-sub">Entrega Cocina</div>
+    </div>
+    <div class="role-card inst-tope"   onclick="goToPin('instaladorTope')">
+      <div class="role-icon">🪨</div><div class="role-name">INST. TOPES</div><div class="role-sub">Countertops</div>
+    </div>
+    <div class="role-card encargado"   onclick="goToPin('encargado')">
+      <div class="role-icon">✅</div><div class="role-name">ENCARGADO</div><div class="role-sub">Aprobación final</div>
+    </div>
+    <div style="grid-column:1/-1;text-align:center;padding:4px 0;">
+      <button onclick="showSetup()" style="background:none;border:none;color:var(--text-muted);font-size:12px;cursor:pointer;">⚙️ Configuración</button>
+    </div>
   </div>
 </div>
 
 <!-- ── PIN ───────────────────────────────────────────────────── -->
-<div id="screen-pin" class="screen">
-  <div class="pin-title">Acceso</div>
-  <div class="pin-role" id="pin-role-name">Taller</div>
+<div id="screen-pin" class="screen" style="align-items:center;">
+  <button class="pin-back" onclick="showRoles()">←</button>
+  <div class="pin-role-label">Acceso</div>
+  <div class="pin-role-name" id="pin-role-name">Taller</div>
   <div class="pin-dots">
-    <div class="pin-dot" id="dot-0"></div>
-    <div class="pin-dot" id="dot-1"></div>
-    <div class="pin-dot" id="dot-2"></div>
-    <div class="pin-dot" id="dot-3"></div>
+    <span class="pin-dot" id="dot-0"></span>
+    <span class="pin-dot" id="dot-1"></span>
+    <span class="pin-dot" id="dot-2"></span>
+    <span class="pin-dot" id="dot-3"></span>
   </div>
-  <div class="pin-error" id="pin-error"></div>
-  <div class="pin-numpad">
+  <div class="pin-pad">
     <button class="pin-key" onclick="pinKey('1')">1</button>
     <button class="pin-key" onclick="pinKey('2')">2</button>
     <button class="pin-key" onclick="pinKey('3')">3</button>
@@ -261,10 +252,11 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
     <button class="pin-key" onclick="pinKey('7')">7</button>
     <button class="pin-key" onclick="pinKey('8')">8</button>
     <button class="pin-key" onclick="pinKey('9')">9</button>
-    <button class="pin-key" onclick="pinKey('0')" style="grid-column:2">0</button>
+    <button class="pin-key empty"></button>
+    <button class="pin-key" onclick="pinKey('0')">0</button>
     <button class="pin-key del" onclick="pinDel()">⌫</button>
   </div>
-  <button class="pin-back" onclick="showRoles()">← Volver</button>
+  <div class="pin-error-msg" id="pin-error"></div>
 </div>
 
 <!-- ── Units ─────────────────────────────────────────────────── -->
@@ -311,53 +303,48 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
   </div>
 </div>
 
-<!-- ── Photo Modal ───────────────────────────────────────────── -->
-<div class="photo-modal" id="photo-modal" onclick="closePhotoModal()">
-  <button class="photo-modal-close">✕</button>
+<input type="file" id="camera-input" accept="image/*" capture="environment" multiple onchange="handlePhotos(event)">
+
+<div id="photo-modal">
+  <button id="photo-modal-close" onclick="closePhotoModal()">✕</button>
   <img id="photo-modal-img" src="" alt="">
 </div>
-
-<!-- ── Toast & Loading ───────────────────────────────────────── -->
-<div class="toast" id="toast"></div>
-<div class="loading" id="loading">
-  <div class="loading-spinner"></div>
-  <div class="loading-text" id="loading-text">Cargando...</div>
-</div>
-
-<!-- Camera input hidden -->
-<input type="file" id="camera-input" accept="image/*" capture="environment" multiple style="display:none" onchange="handlePhotos(event)">
+<div id="toast"></div>
+<div id="loading"><div class="spinner"></div><p id="loading-text">Cargando...</p></div>
 
 <script>
-// ── Config ───────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════
+//  CONFIGURACIÓN — cambia aquí los PINs de cada rol
+// ═══════════════════════════════════════════════════════════════
+const PINS = {
+  taller:           '1111',   // ← PIN Taller (Medidas)
+  instaladorCocina: '2222',   // ← PIN Instalador Cocinas
+  instaladorTope:   '3333',   // ← PIN Instalador Topes
+  encargado:        '4444',   // ← PIN Encargado
+};
+// ═══════════════════════════════════════════════════════════════
+
 const BOARD_ID = 10019027783;
 const API_URL  = 'https://api.monday.com/v2';
-const FILE_URL = '/monday-file';
-
-// PINs — cambia aquí para modificar los códigos
-const PINS = {
-  taller:           '1111',
-  instaladorCocina: '2222',
-  instaladorTope:   '3333',
-  encargado:        '4444',
-};
+const FILE_URL = '/monday-file'; // proxy Netlify → Monday (evita CORS)
 
 const COL = {
-  medidas:           'color_mkvna34b',    // Rectificar Medidas (Taller)
-  entregaCocina:     'status',            // Entrega Cocina (Inst. Cocinas)
-  instalacionTope:   'color_mkvn9ykp',    // Instalacion Tope (Inst. Topes)
-  inspeccionCliente: 'color_mkvnec2y',    // Insp. Cliente (Encargado)
-  fechaEntrega:      'date4',
-  fechaMedidas:      'date_mkvngwbq',
-  fechaTopes:        'date_mkvnn92k',
-  problemas:         'long_text_mkvnsrm6',// Arreglos Contratista
-  label:             'color_mkvnyjbj',    // Tipo unidad (3BR/4BR Izq/Der)
+  fabricacion:       'color_mkvna34b',     // Rectificar Medidas (Taller)
+  instalacionCocina: 'status',             // Entrega Cocina (Inst. Cocinas)
+  instalacionTope:   'color_mkvn9ykp',     // Instalacion Tope (Inst. Topes)
+  aprobacion:        'color_mkvnec2y',     // Insp. Cliente (Encargado)
+  fechaMedidas:      'date_mkvngwbq',      // Fecha Medidas
+  fechaEntrega:      'date4',              // Fecha Entrega
+  fechaTopes:        'date_mkvnn92k',      // Fecha Topes
+  problemas:         'long_text_mkvnsrm6', // Arreglos Contratista
+  problemasCliente:  'long_text_mkvn6a7',  // Arreglos Cliente
 };
 
 const ROLES = {
-  taller:           { name: 'Taller',        col: COL.medidas,           cls: 'taller',      photos: false, sig: false, sigRequired: false, issues: true,  doneLabel: 'Terminado', dateCol: COL.fechaMedidas, action: 'Marcar Medidas Realizadas ✔' },
-  instaladorCocina: { name: 'Inst. Cocinas', col: COL.entregaCocina,     cls: 'inst-cocina', photos: true,  sig: true,  sigRequired: false, issues: true,  doneLabel: 'Terminado', dateCol: COL.fechaEntrega, action: 'Marcar Cocina Entregada ✔' },
-  instaladorTope:   { name: 'Inst. Topes',   col: COL.instalacionTope,   cls: 'inst-tope',   photos: true,  sig: true,  sigRequired: false, issues: true,  doneLabel: 'Terminado', dateCol: COL.fechaTopes,   action: 'Marcar Topes Instalados ✔' },
-  encargado:        { name: 'Encargado',     col: COL.inspeccionCliente, cls: 'encargado',   photos: false, sig: true,  sigRequired: true,  issues: false, doneLabel: 'Satisfecho', dateCol: null,            action: 'Firmar y Aprobar ✔' },
+  taller:           { name: 'Taller',        col: COL.fabricacion,       cls: 'taller',      photos: false, sig: false, sigRequired: false, issues: true,  doneLabel: 'Terminado',  action: 'Marcar Medidas Realizadas ✔' },
+  instaladorCocina: { name: 'Inst. Cocinas', col: COL.instalacionCocina, cls: 'inst-cocina', photos: true,  sig: true,  sigRequired: false, issues: true,  doneLabel: 'Terminado',  action: 'Marcar Cocina Entregada ✔' },
+  instaladorTope:   { name: 'Inst. Topes',   col: COL.instalacionTope,   cls: 'inst-tope',   photos: true,  sig: true,  sigRequired: false, issues: true,  doneLabel: 'Terminado',  action: 'Marcar Topes Instalados ✔' },
+  encargado:        { name: 'Encargado',     col: COL.aprobacion,        cls: 'encargado',   photos: false, sig: true,  sigRequired: true,  issues: false, doneLabel: 'Satisfecho', action: 'Firmar y Aprobar ✔' },
 };
 
 const S = {
@@ -414,7 +401,7 @@ function updatePinDots(error) {
   for (let i = 0; i < 4; i++) {
     const dot = document.getElementById('dot-' + i);
     dot.className = 'pin-dot';
-    if (error)                       dot.classList.add('error');
+    if (error)              dot.classList.add('error');
     else if (i < S.pinBuffer.length) dot.classList.add('filled');
   }
 }
@@ -493,6 +480,7 @@ async function uploadFileToUpdate(updateId, blob, filename) {
   return json;
 }
 
+// Convierte cualquier imagen a JPEG (resuelve HEIC de iPhone)
 async function fileToJpeg(file) {
   return new Promise(resolve => {
     const img = new Image();
@@ -512,6 +500,7 @@ async function fileToJpeg(file) {
   });
 }
 
+// Descarga un archivo de Monday con auth y lo convierte a blob URL
 async function fetchAsBlob(url) {
   try {
     const res = await fetch(url, { headers: { Authorization: S.token } });
@@ -533,17 +522,6 @@ function getColText(unit, colId) { const cv = unit.column_values.find(c => c.id 
 function hasIssue(unit) { return !!getColText(unit, COL.problemas).trim(); }
 function statusIcon(s)  { return s==='done'?'✅':s==='progress'?'⏳':'⬜'; }
 function statusLabel(s) { return s==='done'?'Completado':s==='progress'?'En proceso':'Pendiente'; }
-
-function getUnitLabel(unit) {
-  const t = getColText(unit, COL.label);
-  if (!t) return null;
-  const tl = t.toLowerCase();
-  if (tl.includes('3') && tl.includes('izq')) return { text: t, cls: 'label-3br-izq' };
-  if (tl.includes('4') && tl.includes('izq')) return { text: t, cls: 'label-4br-izq' };
-  if (tl.includes('4') && tl.includes('der')) return { text: t, cls: 'label-4br-der' };
-  if (tl.includes('3') && tl.includes('der')) return { text: t, cls: 'label-3br-der' };
-  return { text: t, cls: '' };
-}
 
 async function refreshAll() {
   const items = await loadAllItems();
@@ -597,14 +575,9 @@ function renderUnits(units) {
   else if (S.filter==='issues')   visible = units.filter(u => hasIssue(u));
 
   document.getElementById('units-grid').innerHTML = visible.map(u => {
-    const st = getColStatus(u,col), warn = hasIssue(u);
-    const lbl = getUnitLabel(u);
-    const shortLabel = lbl ? lbl.text.replace('BR - ','').replace('BR -','') : '';
+    const st = getColStatus(u,col), warn = hasIssue(u), num = (u.name.replace(/\D/g,'') || u.name);
     return `<button class="unit-btn status-${st}${warn?' has-issue':''}" onclick="openUnit('${u.id}')">
-      <span class="u-icon">${statusIcon(st)}</span>
-      <span class="u-num">${u.name.replace(/\D/g,'') || u.name}</span>
-      ${shortLabel ? `<span class="u-label">${shortLabel}</span>` : ''}
-      ${warn?'<span class="u-warn">⚠️</span>':''}
+      <span class="u-icon">${statusIcon(st)}</span><span class="u-num">${num}</span>${warn?'<span class="u-warn">⚠️</span>':''}
     </button>`;
   }).join('');
 
@@ -645,19 +618,17 @@ function openUnit(itemId) {
 
   renderDetail();
   showScreen('detail');
-  if (r.photos) loadLocalPhotos(itemId);
-  if (r.photos || r.sig) loadDetailMedia(itemId);
+  if (r.photos) loadLocalPhotos(itemId);   // fotos del dispositivo
+  if (r.photos || r.sig) loadDetailMedia(itemId); // fotos + firma de Monday
 }
 
 function renderDetail() {
   const r = ROLES[S.role], u = S.current;
-  const lbl = getUnitLabel(u);
   let html = `<div class="detail-status-card"><h3>Estado General</h3>
-    ${lbl ? `<span class="unit-label-badge ${lbl.cls}">${lbl.text}</span>` : ''}
-    ${row('Rectificar Medidas', getColStatus(u,COL.medidas),           getColText(u,COL.medidas)           || statusLabel(getColStatus(u,COL.medidas)))}
-    ${row('Entrega Cocina',     getColStatus(u,COL.entregaCocina),     getColText(u,COL.entregaCocina)     || statusLabel(getColStatus(u,COL.entregaCocina)))}
+    ${row('Rectificar Medidas', getColStatus(u,COL.fabricacion),       getColText(u,COL.fabricacion)       || statusLabel(getColStatus(u,COL.fabricacion)))}
+    ${row('Entrega Cocina',     getColStatus(u,COL.instalacionCocina), getColText(u,COL.instalacionCocina) || statusLabel(getColStatus(u,COL.instalacionCocina)))}
     ${row('Instalación Tope',   getColStatus(u,COL.instalacionTope),   getColText(u,COL.instalacionTope)   || statusLabel(getColStatus(u,COL.instalacionTope)))}
-    ${row('Insp. Cliente',      getColStatus(u,COL.inspeccionCliente), getColText(u,COL.inspeccionCliente) || statusLabel(getColStatus(u,COL.inspeccionCliente)))}
+    ${row('Insp. Cliente',      getColStatus(u,COL.aprobacion),        getColText(u,COL.aprobacion)        || statusLabel(getColStatus(u,COL.aprobacion)))}
   </div>`;
 
   if (r.photos) html += `<div class="photos-card">
@@ -670,7 +641,7 @@ function renderDetail() {
   if (r.issues) {
     const existing = getColText(u, COL.problemas);
     html += `<div class="issue-card"><h3>⚠️ Reportar Daño / Faltante</h3>
-      ${existing ? `<div class="issue-existing"><strong>Problema reportado:</strong> ${existing}</div>
+      ${existing ? `<div class="issue-existing"><strong>Problema reportado:</strong>${existing}</div>
         <div class="issue-actions-row">
           <button class="btn-issue-sm btn-clear" onclick="clearIssue()">🗑️ Borrar</button>
           <button class="btn-issue-sm btn-resolve" onclick="resolveIssue()">✅ Resuelto</button>
@@ -681,8 +652,8 @@ function renderDetail() {
   }
 
   if (r.sig) {
-    const sigTitle = r.sigRequired ? '✍️ Firma de Aprobación' : '✍️ Firma (opcional)';
-    const sigSub   = r.sigRequired ? 'Presiona el botón para activar la firma.' : 'Firma para certificar que el trabajo está terminado.';
+    const sigTitle = r.sigRequired ? '✍️ Firma de Aprobación' : '✍️ Firma del Encargado (opcional)';
+    const sigSub   = r.sigRequired ? 'Presiona el botón para activar la firma.' : 'El encargado puede firmar para certificar que el trabajo está terminado.';
     html += `<div class="sig-card" id="sig-card">
       <h3>${sigTitle}</h3>
       <p>${sigSub}</p>
@@ -712,6 +683,7 @@ async function loadDetailMedia(itemId) {
     const d = await gql(q, { id: String(itemId) });
     const updates = d.items?.[0]?.updates || [];
 
+    // Photos
     const grid = document.getElementById('photo-grid');
     document.getElementById('photos-loading')?.remove();
     if (grid) {
@@ -733,6 +705,7 @@ async function loadDetailMedia(itemId) {
       }
     }
 
+    // Signature
     const sigStatus = document.getElementById('sig-status');
     if (sigStatus) {
       const sigUpd = updates.find(u => u.body?.includes('✍️'));
@@ -747,6 +720,7 @@ async function loadDetailMedia(itemId) {
           if (sigSrc) sigImgHtml = `<img src="${sigSrc}" alt="Firma">`;
         }
         sigStatus.innerHTML = `<div class="sig-done-banner">✅ Firmado por ${who}${when?`<span>${when}</span>`:''}${sigImgHtml}</div>`;
+        // Ocultar botón de activar y canvas — ya está firmado
         document.getElementById('sig-activate-btn')?.style && (document.getElementById('sig-activate-btn').style.display = 'none');
         document.getElementById('sig-canvas-wrap').style.display  = 'none';
         document.getElementById('sig-actions').style.display      = 'none';
@@ -787,6 +761,7 @@ function activateSignature() {
   document.getElementById('sig-activate-btn').style.display = 'none';
   document.getElementById('sig-canvas-wrap').style.display  = 'block';
   document.getElementById('sig-actions').style.display      = 'flex';
+  // Re-init canvas size now that it's visible
   const canvas = document.getElementById('sig-canvas');
   if (canvas && sigCtx) { canvas.width = canvas.offsetWidth || 300; }
   toast('Dibuja tu firma');
@@ -802,6 +777,7 @@ function clearSignature() {
 async function confirmSignature() {
   if (!S.sigDrawn) { toast('Dibuja tu firma primero'); return; }
   if (S.sigConfirmed) return;
+
   const u = S.current, r = ROLES[S.role];
   const today = new Date().toISOString().split('T')[0];
   showLoading('Guardando firma...');
@@ -809,8 +785,11 @@ async function confirmSignature() {
     const blob = await getSignatureBlob();
     const uid  = await createUpdate(u.id, `✍️ ${r.name} — Firma de aprobación ${u.name} (${today})`);
     await uploadFileToUpdate(uid, blob, `firma_${u.name.replace(/ /g,'_')}_${today}.png`);
+
     S.sigConfirmed = true;
     S.sigActive    = false;
+
+    // Lock the canvas visually
     document.getElementById('sig-canvas-wrap').style.pointerEvents = 'none';
     document.getElementById('sig-canvas-wrap').style.opacity = '0.7';
     document.getElementById('sig-actions').innerHTML =
@@ -852,6 +831,14 @@ async function dbLoadPhotos(unitId) {
     req.onerror   = e => rej(e.target.error);
   });
 }
+async function dbDeletePhoto(id) {
+  const db = await dbOpen();
+  return new Promise((res, rej) => {
+    const tx = db.transaction('photos', 'readwrite');
+    tx.objectStore('photos').delete(id);
+    tx.oncomplete = res; tx.onerror = e => rej(e.target.error);
+  });
+}
 
 // ── Photos ───────────────────────────────────────────────────────
 async function handlePhotos(event) {
@@ -870,17 +857,22 @@ async function handlePhotos(event) {
     toast('⏳ Guardando foto...');
     try {
       const jpeg = await fileToJpeg(file);
+
+      // 1. Guardar localmente (siempre funciona)
       const dataUrl = await blobToDataUrl(jpeg);
       await dbSavePhoto(u.id, dataUrl);
       img.classList.remove('uploading');
       img.onclick = () => openPhotoModal(previewUrl);
       toast('✅ Foto guardada en el dispositivo');
+
+      // 2. Intentar subir a Monday (best-effort, no bloquea)
       const today = new Date().toISOString().split('T')[0];
       const fname = `foto_${u.name.replace(/ /g,'_')}_${Date.now()}.jpg`;
       createUpdate(u.id, `📷 ${r.name} — Foto de instalación ${u.name} (${today})`)
         .then(uid => uploadFileToUpdate(uid, jpeg, fname))
         .then(() => toast('☁️ Foto también sincronizada con Monday'))
         .catch(e => console.warn('Monday upload failed (foto guardada local):', e.message));
+
     } catch(e) {
       img.classList.replace('uploading', 'upload-error');
       toast('❌ Error: ' + e.message);
@@ -932,10 +924,8 @@ async function reportIssue() {
 
 async function clearIssue() {
   showLoading('Borrando...');
-  try {
-    await mutateColumn(S.current.id, COL.problemas, { text: '' });
-    await refreshAll(); hideLoading(); toast('Borrado'); renderDetail(); renderUnits(S.units);
-  } catch(e) { hideLoading(); toast('Error: '+e.message); }
+  try { await mutateColumn(S.current.id, COL.problemas, { text: '' }); await refreshAll(); hideLoading(); toast('Borrado'); renderDetail(); renderUnits(S.units); }
+  catch(e) { hideLoading(); toast('Error: '+e.message); }
 }
 
 async function resolveIssue() {
@@ -971,7 +961,10 @@ async function handleAction() {
   try {
     const today = new Date().toISOString().split('T')[0];
     await mutateColumn(u.id, r.col, { label: r.doneLabel });
-    if (r.dateCol) await mutateColumn(u.id, r.dateCol, { date: today });
+    if (S.role === 'taller')                await mutateColumn(u.id, COL.fechaMedidas, { date: today });
+    else if (S.role === 'instaladorCocina') await mutateColumn(u.id, COL.fechaEntrega, { date: today });
+    else if (S.role === 'instaladorTope')   await mutateColumn(u.id, COL.fechaTopes,   { date: today });
+
     await refreshAll(); hideLoading(); toast(`${u.name} completada ✅`);
     const ab = document.getElementById('action-btn');
     ab.disabled = true; ab.textContent = '✅ Ya Completado';
