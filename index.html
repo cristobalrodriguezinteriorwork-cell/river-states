@@ -159,6 +159,36 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
 .btn-resolve { background: var(--green); color: #fff; }
 .issue-textarea { width: 100%; border: 1.5px solid var(--orange); border-radius: 10px; padding: 12px; font-size: 14px; font-family: inherit; resize: vertical; min-height: 80px; outline: none; color: var(--text); background: #fff; }
 .btn-issue { width: 100%; background: var(--orange); color: #fff; border: none; border-radius: 10px; padding: 12px; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 10px; }
+/* Cuadrito que abre la lista de reportes */
+.issue-open-box { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #fff; border: 1.5px solid var(--orange); border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; cursor: pointer; text-align: left; }
+.issue-open-main { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.issue-open-icon { font-size: 18px; }
+.issue-open-txt { font-size: 14px; font-weight: 700; color: #92400e; }
+.issue-open-badges { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.issue-badge { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 20px; white-space: nowrap; }
+.issue-badge.pend { background: #fff3cd; color: #92400e; }
+.issue-badge.done { background: #d6f5e3; color: #00794a; }
+.issue-open-arrow { font-size: 22px; color: var(--orange); line-height: 1; }
+/* Página/modal de reportes */
+#issues-modal { position: fixed; inset: 0; background: rgba(31,56,100,0.55); display: none; align-items: flex-end; justify-content: center; z-index: 998; }
+#issues-modal.show { display: flex; }
+.issues-sheet { background: var(--bg); width: 100%; max-width: 520px; max-height: 90vh; border-radius: 20px 20px 0 0; display: flex; flex-direction: column; }
+.issues-sheet-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 18px 12px; border-bottom: 1px solid #e5e7eb; }
+.issues-sheet-header h3 { font-size: 16px; font-weight: 800; color: var(--text); }
+.issues-sheet-close { background: #e5e7eb; border: none; width: 34px; height: 34px; border-radius: 50%; font-size: 16px; cursor: pointer; color: var(--text); }
+.issues-sheet-body { padding: 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+.issue-item { background: #fff8f0; border: 1.5px solid var(--orange); border-radius: 12px; padding: 14px; }
+.issue-item.fixed { background: #f1f5f3; border-color: #b9e3cd; }
+.issue-item-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.issue-item-num { font-size: 12px; font-weight: 800; color: var(--text-muted); }
+.issue-item-tag { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 20px; background: #d6f5e3; color: #00794a; }
+.issue-item-tag.pend { background: #fff3cd; color: #92400e; }
+.issue-item-del { margin-left: auto; background: none; border: none; font-size: 16px; cursor: pointer; opacity: 0.6; }
+.issue-item-text { font-size: 15px; line-height: 1.5; color: var(--text); white-space: pre-wrap; word-break: break-word; }
+.issue-item.fixed .issue-item-text { text-decoration: line-through; color: var(--text-muted); }
+.issue-item-meta { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+.issue-item-fix { width: 100%; margin-top: 12px; border: none; border-radius: 10px; padding: 11px; font-size: 14px; font-weight: 700; cursor: pointer; background: var(--green); color: #fff; }
+.issue-item-fix.on { background: #e5e7eb; color: var(--text); }
 
 /* ── Action Footer ── */
 .action-footer { padding: 16px; background: var(--card); border-top: 1px solid #f0f0f0; flex-shrink: 0; }
@@ -190,7 +220,7 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
 
 <!-- ── Setup ─────────────────────────────────────────────────── -->
 <div id="screen-setup" class="screen">
-  <img src="logo blanco 14.png" class="setup-logo" onerror="this.style.display='none';document.getElementById('logo-fallback').style.display='block'">
+  <img src="logo.png" class="setup-logo" onerror="this.style.display='none';document.getElementById('logo-fallback').style.display='block'">
   <div id="logo-fallback" class="setup-logo-fallback" style="display:none">🏗️</div>
   <div class="setup-title">River States</div>
   <div class="setup-brand">Wood Studio</div>
@@ -206,7 +236,7 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
 <!-- ── Roles ─────────────────────────────────────────────────── -->
 <div id="screen-roles" class="screen">
   <div class="roles-header">
-    <img src="logo blanco 14.png" class="roles-header-logo" onerror="this.style.display='none'">
+    <img src="logo.png" class="roles-header-logo" onerror="this.style.display='none'">
     <div class="roles-header-text">
       <h1>River States</h1>
       <p>Wood Studio · Selecciona tu rol</p>
@@ -268,7 +298,7 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
       <div class="header-sub" id="units-header-sub">River States · 128 unidades</div>
     </div>
     <button class="refresh-btn" id="refresh-btn" onclick="loadUnits()">↻</button>
-    <img src="logo blanco 14.png" class="header-logo" onerror="this.style.display='none'">
+    <img src="logo.png" class="header-logo" onerror="this.style.display='none'">
   </div>
   <div class="units-search">
     <input type="text" id="search-input" placeholder="🔍  Buscar unidad..." oninput="filterUnits(this.value)">
@@ -294,7 +324,7 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
       <h2 id="detail-title">Unidad 1</h2>
       <div class="header-sub" id="detail-role-label"></div>
     </div>
-    <img src="logo blanco 14.png" class="header-logo" onerror="this.style.display='none'">
+    <img src="logo.png" class="header-logo" onerror="this.style.display='none'">
   </div>
   <div class="detail-body" id="detail-body"></div>
   <div class="action-footer">
@@ -308,6 +338,16 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
 <div id="photo-modal">
   <button id="photo-modal-close" onclick="closePhotoModal()">✕</button>
   <img id="photo-modal-img" src="" alt="">
+</div>
+
+<div id="issues-modal">
+  <div class="issues-sheet">
+    <div class="issues-sheet-header">
+      <h3 id="issues-modal-title">Reportes de Daño / Faltante</h3>
+      <button class="issues-sheet-close" onclick="closeIssuesModal()">✕</button>
+    </div>
+    <div class="issues-sheet-body" id="issues-sheet-body"></div>
+  </div>
 </div>
 <div id="toast"></div>
 <div id="loading"><div class="spinner"></div><p id="loading-text">Cargando...</p></div>
@@ -519,7 +559,18 @@ function getColStatus(unit, colId) {
   return 'progress';
 }
 function getColText(unit, colId) { const cv = unit.column_values.find(c => c.id === colId); return cv?.text || ''; }
-function hasIssue(unit) { return !!getColText(unit, COL.problemas).trim(); }
+// Lee todos los reportes de daño/faltante. Soporta el formato viejo (texto plano = 1 reporte).
+function parseIssues(unit) {
+  const raw = getColText(unit, COL.problemas).trim();
+  if (!raw) return [];
+  try {
+    const arr = JSON.parse(raw);
+    if (Array.isArray(arr)) return arr;
+  } catch (e) { /* formato viejo */ }
+  return [{ t: raw, by: '', d: '', fixed: false }];
+}
+// Hay problema "abierto" si existe al menos un reporte sin arreglar.
+function hasIssue(unit) { return parseIssues(unit).some(i => !i.fixed); }
 function statusIcon(s)  { return s==='done'?'✅':s==='progress'?'⏳':'⬜'; }
 function statusLabel(s) { return s==='done'?'Completado':s==='progress'?'En proceso':'Pendiente'; }
 
@@ -639,13 +690,21 @@ function renderDetail() {
     </div></div>`;
 
   if (r.issues) {
-    const existing = getColText(u, COL.problemas);
+    const issues  = parseIssues(u);
+    const pending = issues.filter(i => !i.fixed).length;
+    const fixed   = issues.filter(i =>  i.fixed).length;
     html += `<div class="issue-card"><h3>⚠️ Reportar Daño / Faltante</h3>
-      ${existing ? `<div class="issue-existing"><strong>Problema reportado:</strong>${existing}</div>
-        <div class="issue-actions-row">
-          <button class="btn-issue-sm btn-clear" onclick="clearIssue()">🗑️ Borrar</button>
-          <button class="btn-issue-sm btn-resolve" onclick="resolveIssue()">✅ Resuelto</button>
-        </div>` : ''}
+      ${issues.length ? `<button class="issue-open-box" onclick="openIssuesModal()">
+          <div class="issue-open-main">
+            <span class="issue-open-icon">📋</span>
+            <span class="issue-open-txt">Ver reportes (${issues.length})</span>
+          </div>
+          <div class="issue-open-badges">
+            ${pending ? `<span class="issue-badge pend">${pending} pendiente${pending>1?'s':''}</span>` : ''}
+            ${fixed   ? `<span class="issue-badge done">${fixed} arreglado${fixed>1?'s':''}</span>` : ''}
+            <span class="issue-open-arrow">›</span>
+          </div>
+        </button>` : ''}
       <textarea class="issue-textarea" id="issue-textarea" placeholder="Ej: Se rompió una puerta, falta una pata..."></textarea>
       <button class="btn-issue" onclick="reportIssue()">📤 Reportar Problema</button>
     </div>`;
@@ -907,6 +966,13 @@ function openPhotoModal(src)  { document.getElementById('photo-modal-img').src=s
 function closePhotoModal()    { document.getElementById('photo-modal').classList.remove('show'); }
 
 // ── Issues ───────────────────────────────────────────────────────
+function escHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+async function saveIssues(unitId, arr) {
+  // Si quedó vacío mandamos texto vacío para limpiar la columna.
+  await mutateColumn(unitId, COL.problemas, { text: arr.length ? JSON.stringify(arr) : '' });
+}
+
 async function reportIssue() {
   const text = document.getElementById('issue-textarea')?.value.trim();
   if (!text) { toast('Escribe el problema antes de reportar'); return; }
@@ -916,26 +982,69 @@ async function reportIssue() {
   const ts = now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
   showLoading('Reportando...');
   try {
-    await mutateColumn(u.id, COL.problemas, { text: `${r.name} (${ds} ${ts}): ${text}` });
+    const arr = parseIssues(u);
+    arr.push({ t: text, by: r.name, d: `${ds} ${ts}`, fixed: false });
+    await saveIssues(u.id, arr);
     await createUpdate(u.id, `⚠️ PROBLEMA — ${u.name}\nPor: ${r.name} · ${ds} ${ts}\n\n${text}`);
     await refreshAll(); hideLoading(); toast('Problema reportado ⚠️'); renderDetail(); renderUnits(S.units);
   } catch(e) { hideLoading(); toast('Error: '+e.message); }
 }
 
-async function clearIssue() {
-  showLoading('Borrando...');
-  try { await mutateColumn(S.current.id, COL.problemas, { text: '' }); await refreshAll(); hideLoading(); toast('Borrado'); renderDetail(); renderUnits(S.units); }
-  catch(e) { hideLoading(); toast('Error: '+e.message); }
+// ── Modal de reportes ─────────────────────────────────────────────
+function openIssuesModal() {
+  if (!S.current) return;
+  document.getElementById('issues-modal-title').textContent = `Reportes — ${S.current.name}`;
+  renderIssuesList();
+  document.getElementById('issues-modal').classList.add('show');
+}
+function closeIssuesModal() { document.getElementById('issues-modal').classList.remove('show'); }
+
+function renderIssuesList() {
+  const issues = parseIssues(S.current);
+  const body = document.getElementById('issues-sheet-body');
+  if (!issues.length) { closeIssuesModal(); renderDetail(); return; }
+  body.innerHTML = issues.map((it, i) => `
+    <div class="issue-item ${it.fixed ? 'fixed' : ''}">
+      <div class="issue-item-top">
+        <span class="issue-item-num">#${i+1}</span>
+        ${it.fixed ? '<span class="issue-item-tag">✅ Arreglado</span>' : '<span class="issue-item-tag pend">⚠️ Pendiente</span>'}
+        <button class="issue-item-del" onclick="deleteIssue(${i})" title="Borrar">🗑️</button>
+      </div>
+      <div class="issue-item-text">${escHtml(it.t)}</div>
+      ${(it.by || it.d) ? `<div class="issue-item-meta">${escHtml(it.by)}${it.by && it.d ? ' · ' : ''}${escHtml(it.d)}</div>` : ''}
+      <button class="issue-item-fix ${it.fixed ? 'on' : ''}" onclick="toggleIssueFixed(${i})">
+        ${it.fixed ? '↩ Marcar como pendiente' : '✅ Marcar como arreglado'}
+      </button>
+    </div>`).join('');
 }
 
-async function resolveIssue() {
+async function toggleIssueFixed(i) {
   const u = S.current, r = ROLES[S.role];
-  const ds = new Date().toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric'});
-  showLoading('Marcando resuelto...');
+  const arr = parseIssues(u);
+  if (!arr[i]) return;
+  const nowFixed = !arr[i].fixed;
+  arr[i].fixed = nowFixed;
+  arr[i].fd = nowFixed ? new Date().toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric'}) : '';
+  showLoading(nowFixed ? 'Marcando arreglado...' : 'Reabriendo...');
   try {
-    await mutateColumn(u.id, COL.problemas, { text: '' });
-    await createUpdate(u.id, `✅ RESUELTO — ${u.name}\nPor: ${r.name} · ${ds}`);
-    await refreshAll(); hideLoading(); toast('Resuelto ✅'); renderDetail(); renderUnits(S.units);
+    await saveIssues(u.id, arr);
+    if (nowFixed) await createUpdate(u.id, `✅ ARREGLADO — ${u.name}\nPor: ${r.name} · ${arr[i].fd}\n\n${arr[i].t}`);
+    await refreshAll(); hideLoading();
+    toast(nowFixed ? 'Marcado arreglado ✅' : 'Reabierto');
+    renderIssuesList(); renderDetail(); renderUnits(S.units);
+  } catch(e) { hideLoading(); toast('Error: '+e.message); }
+}
+
+async function deleteIssue(i) {
+  const u = S.current;
+  const arr = parseIssues(u);
+  if (!arr[i]) return;
+  arr.splice(i, 1);
+  showLoading('Borrando...');
+  try {
+    await saveIssues(u.id, arr);
+    await refreshAll(); hideLoading(); toast('Reporte borrado');
+    renderIssuesList(); renderDetail(); renderUnits(S.units);
   } catch(e) { hideLoading(); toast('Error: '+e.message); }
 }
 
