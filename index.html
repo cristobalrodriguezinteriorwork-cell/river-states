@@ -58,6 +58,9 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
 .role-card.inst-cocina { border-color: var(--green); }
 .role-card.inst-tope   { border-color: var(--orange); }
 .role-card.encargado   { border-color: var(--red); }
+.role-card.admin       { border-color: var(--brand); background: var(--brand); }
+.role-card.admin .role-name { color: #fff; }
+.role-card.admin .role-sub  { color: rgba(255,255,255,0.7); }
 
 /* ── PIN Screen ── */
 #screen-pin { background: var(--brand); align-items: center; justify-content: flex-start; padding-top: 60px; }
@@ -189,6 +192,13 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
 .issue-item-meta { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
 .issue-item-fix { width: 100%; margin-top: 12px; border: none; border-radius: 10px; padding: 11px; font-size: 14px; font-weight: 700; cursor: pointer; background: var(--green); color: #fff; }
 .issue-item-fix.on { background: #e5e7eb; color: var(--text); }
+.issue-empty { font-size: 13px; color: var(--text-muted); padding: 6px 2px; }
+.issue-group-title { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: var(--brand); margin: 6px 2px 2px; padding-top: 6px; border-top: 1px solid #e5e7eb; }
+.issue-group-title:first-child { border-top: none; padding-top: 0; }
+/* Barra de etapas (solo Administración) */
+.admin-stage-bar { display: flex; gap: 8px; padding: 8px 16px 0; background: var(--brand); overflow-x: auto; }
+.stage-pill { flex: 1; white-space: nowrap; border: none; border-radius: 8px; padding: 8px 6px; font-size: 12px; font-weight: 700; cursor: pointer; background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.85); }
+.stage-pill.active { background: #fff; color: var(--brand); }
 
 /* ── Action Footer ── */
 .action-footer { padding: 16px; background: var(--card); border-top: 1px solid #f0f0f0; flex-shrink: 0; }
@@ -255,6 +265,9 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
     <div class="role-card encargado"   onclick="goToPin('encargado')">
       <div class="role-icon">✅</div><div class="role-name">ENCARGADO</div><div class="role-sub">Aprobación final</div>
     </div>
+    <div class="role-card admin" style="grid-column:1/-1;" onclick="goToPin('admin')">
+      <div class="role-icon">👑</div><div class="role-name">ADMINISTRACIÓN</div><div class="role-sub">Ver todo · todos los problemas</div>
+    </div>
     <div style="grid-column:1/-1;text-align:center;padding:4px 0;">
       <button onclick="showSetup()" style="background:none;border:none;color:var(--text-muted);font-size:12px;cursor:pointer;">⚙️ Configuración</button>
     </div>
@@ -303,6 +316,12 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
   <div class="units-search">
     <input type="text" id="search-input" placeholder="🔍  Buscar unidad..." oninput="filterUnits(this.value)">
   </div>
+  <div class="admin-stage-bar" id="admin-stage-bar" style="display:none;">
+    <button class="stage-pill active" data-stage="fabricacion"       onclick="setAdminStage('fabricacion',this)">📐 Taller</button>
+    <button class="stage-pill"        data-stage="instalacionCocina" onclick="setAdminStage('instalacionCocina',this)">🏠 Cocina</button>
+    <button class="stage-pill"        data-stage="instalacionTope"   onclick="setAdminStage('instalacionTope',this)">🪨 Topes</button>
+    <button class="stage-pill"        data-stage="aprobacion"        onclick="setAdminStage('aprobacion',this)">✅ Aprobado</button>
+  </div>
   <div class="units-stats">
     <div class="stat-chip" id="chip-done"     onclick="toggleChipFilter('done')"><span class="stat-n" id="stat-done">0</span><span class="stat-l">✅ Listas</span></div>
     <div class="stat-chip" id="chip-progress" onclick="toggleChipFilter('progress')"><span class="stat-n" id="stat-progress">0</span><span class="stat-l">⏳ En proceso</span></div>
@@ -333,7 +352,7 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
   </div>
 </div>
 
-<input type="file" id="camera-input" accept="image/*" capture="environment" multiple onchange="handlePhotos(event)">
+<input type="file" id="camera-input" accept="image/*" multiple onchange="handlePhotos(event)">
 
 <div id="photo-modal">
   <button id="photo-modal-close" onclick="closePhotoModal()">✕</button>
@@ -361,6 +380,7 @@ const PINS = {
   instaladorCocina: '2222',   // ← PIN Instalador Cocinas
   instaladorTope:   '3333',   // ← PIN Instalador Topes
   encargado:        '4444',   // ← PIN Encargado
+  admin:            '5555',   // ← PIN Administración (ve TODO)
 };
 // ═══════════════════════════════════════════════════════════════
 
@@ -385,12 +405,13 @@ const ROLES = {
   instaladorCocina: { name: 'Inst. Cocinas', col: COL.instalacionCocina, cls: 'inst-cocina', photos: true,  sig: true,  sigRequired: false, issues: true,  doneLabel: 'Terminado',  action: 'Marcar Cocina Entregada ✔' },
   instaladorTope:   { name: 'Inst. Topes',   col: COL.instalacionTope,   cls: 'inst-tope',   photos: true,  sig: true,  sigRequired: false, issues: true,  doneLabel: 'Terminado',  action: 'Marcar Topes Instalados ✔' },
   encargado:        { name: 'Encargado',     col: COL.aprobacion,        cls: 'encargado',   photos: false, sig: true,  sigRequired: true,  issues: false, doneLabel: 'Satisfecho', action: 'Firmar y Aprobar ✔' },
+  admin:            { name: 'Administración', col: COL.aprobacion,        cls: 'admin',       photos: true,  sig: false, sigRequired: false, issues: true,  doneLabel: '',           action: '' },
 };
 
 const S = {
   token: null, role: null, units: [], current: null,
   sigDrawn: false, sigConfirmed: false, sigActive: false,
-  filter: 'all', pinBuffer: '', pinTargetRole: null,
+  filter: 'all', pinBuffer: '', pinTargetRole: null, adminStage: 'fabricacion',
 };
 
 window.addEventListener('load', () => {
@@ -569,8 +590,16 @@ function parseIssues(unit) {
   } catch (e) { /* formato viejo */ }
   return [{ t: raw, by: '', d: '', fixed: false }];
 }
-// Hay problema "abierto" si existe al menos un reporte sin arreglar.
-function hasIssue(unit) { return parseIssues(unit).some(i => !i.fixed); }
+// Reportes que le corresponden a un rol. Admin ve todos. Los viejos (sin .role) solo admin.
+function issuesForRole(unit, role) {
+  const arr = parseIssues(unit);
+  if (role === 'admin') return arr;
+  return arr.filter(i => i.role === role);
+}
+// Hay problema "abierto" (sin arreglar) que le corresponde al rol actual.
+function hasIssue(unit) { return issuesForRole(unit, S.role).some(i => !i.fixed); }
+// Columna de estado activa según el rol (admin elige etapa).
+function currentCol() { return S.role === 'admin' ? COL[S.adminStage] : ROLES[S.role].col; }
 function statusIcon(s)  { return s==='done'?'✅':s==='progress'?'⏳':'⬜'; }
 function statusLabel(s) { return s==='done'?'Completado':s==='progress'?'En proceso':'Pendiente'; }
 
@@ -582,12 +611,27 @@ async function refreshAll() {
 
 // ── Units Screen ─────────────────────────────────────────────────
 async function selectRole(roleId) {
-  S.role = roleId; S.filter = 'all';
+  S.role = roleId; S.filter = 'all'; S.adminStage = 'fabricacion';
   const r = ROLES[roleId];
   document.getElementById('units-header-title').textContent = r.name;
   document.getElementById('units-header-sub').textContent   = 'River States · 128 unidades';
+  // Barra de etapas: solo para Administración
+  const stageBar = document.getElementById('admin-stage-bar');
+  stageBar.style.display = roleId === 'admin' ? 'flex' : 'none';
+  if (roleId === 'admin') {
+    stageBar.querySelectorAll('.stage-pill').forEach(b => b.classList.toggle('active', b.dataset.stage === 'fabricacion'));
+  }
   showScreen('units');
   await loadUnits();
+}
+
+function setAdminStage(stage, btn) {
+  S.adminStage = stage; S.filter = 'all';
+  document.getElementById('admin-stage-bar').querySelectorAll('.stage-pill').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('filter-all').className = 'filter-pill active';
+  document.getElementById('filter-issues-pill').className = 'filter-pill inactive';
+  renderUnits(S.units);
 }
 
 async function loadUnits() {
@@ -612,7 +656,7 @@ function setFilter(f) {
 }
 
 function renderUnits(units) {
-  const col = ROLES[S.role].col;
+  const col = currentCol();
   let done=0, prog=0, pend=0, issueCount=0;
   units.forEach(u => {
     const st = getColStatus(u, col);
@@ -654,17 +698,24 @@ function openUnit(itemId) {
   document.getElementById('detail-title').textContent      = S.current.name;
   document.getElementById('detail-role-label').textContent = r.name;
 
-  const actionBtn = document.getElementById('action-btn');
-  const undoBtn   = document.getElementById('undo-btn');
-  actionBtn.className   = `btn-action ${r.cls}`;
-  actionBtn.textContent = r.action;
-  const st = getColStatus(S.current, r.col);
-  if (st === 'done') {
-    actionBtn.disabled = true; actionBtn.textContent = '✅ Ya Completado';
-    undoBtn.style.display = 'block';
+  const footer = document.querySelector('#screen-detail .action-footer');
+  if (S.role === 'admin') {
+    // El admin solo observa: sin botón de marcar/revertir.
+    footer.style.display = 'none';
   } else {
-    actionBtn.disabled = false;
-    undoBtn.style.display = 'none';
+    footer.style.display = '';
+    const actionBtn = document.getElementById('action-btn');
+    const undoBtn   = document.getElementById('undo-btn');
+    actionBtn.className   = `btn-action ${r.cls}`;
+    actionBtn.textContent = r.action;
+    const st = getColStatus(S.current, r.col);
+    if (st === 'done') {
+      actionBtn.disabled = true; actionBtn.textContent = '✅ Ya Completado';
+      undoBtn.style.display = 'block';
+    } else {
+      actionBtn.disabled = false;
+      undoBtn.style.display = 'none';
+    }
   }
 
   renderDetail();
@@ -690,11 +741,11 @@ function renderDetail() {
     </div></div>`;
 
   if (r.issues) {
-    const issues  = parseIssues(u);
+    const issues  = issuesForRole(u, S.role);
     const pending = issues.filter(i => !i.fixed).length;
     const fixed   = issues.filter(i =>  i.fixed).length;
-    html += `<div class="issue-card"><h3>⚠️ Reportar Daño / Faltante</h3>
-      ${issues.length ? `<button class="issue-open-box" onclick="openIssuesModal()">
+    const isAdmin = S.role === 'admin';
+    const box = issues.length ? `<button class="issue-open-box" onclick="openIssuesModal()">
           <div class="issue-open-main">
             <span class="issue-open-icon">📋</span>
             <span class="issue-open-txt">Ver reportes (${issues.length})</span>
@@ -704,10 +755,16 @@ function renderDetail() {
             ${fixed   ? `<span class="issue-badge done">${fixed} arreglado${fixed>1?'s':''}</span>` : ''}
             <span class="issue-open-arrow">›</span>
           </div>
-        </button>` : ''}
-      <textarea class="issue-textarea" id="issue-textarea" placeholder="Ej: Se rompió una puerta, falta una pata..."></textarea>
-      <button class="btn-issue" onclick="reportIssue()">📤 Reportar Problema</button>
-    </div>`;
+        </button>` : `<div class="issue-empty">Sin reportes${isAdmin?'':' por ahora'}.</div>`;
+    if (isAdmin) {
+      html += `<div class="issue-card"><h3>⚠️ Problemas (todos los roles)</h3>${box}</div>`;
+    } else {
+      html += `<div class="issue-card"><h3>⚠️ Reportar Daño / Faltante</h3>
+        ${issues.length ? box : ''}
+        <textarea class="issue-textarea" id="issue-textarea" placeholder="Ej: Se rompió una puerta, falta una pata..."></textarea>
+        <button class="btn-issue" onclick="reportIssue()">📤 Reportar Problema</button>
+      </div>`;
+    }
   }
 
   if (r.sig) {
@@ -983,7 +1040,7 @@ async function reportIssue() {
   showLoading('Reportando...');
   try {
     const arr = parseIssues(u);
-    arr.push({ t: text, by: r.name, d: `${ds} ${ts}`, fixed: false });
+    arr.push({ t: text, by: r.name, role: S.role, d: `${ds} ${ts}`, fixed: false });
     await saveIssues(u.id, arr);
     await createUpdate(u.id, `⚠️ PROBLEMA — ${u.name}\nPor: ${r.name} · ${ds} ${ts}\n\n${text}`);
     await refreshAll(); hideLoading(); toast('Problema reportado ⚠️'); renderDetail(); renderUnits(S.units);
@@ -999,29 +1056,52 @@ function openIssuesModal() {
 }
 function closeIssuesModal() { document.getElementById('issues-modal').classList.remove('show'); }
 
-function renderIssuesList() {
-  const issues = parseIssues(S.current);
-  const body = document.getElementById('issues-sheet-body');
-  if (!issues.length) { closeIssuesModal(); renderDetail(); return; }
-  body.innerHTML = issues.map((it, i) => `
-    <div class="issue-item ${it.fixed ? 'fixed' : ''}">
+function issueItemHtml(it, realIdx, editable) {
+  return `<div class="issue-item ${it.fixed ? 'fixed' : ''}">
       <div class="issue-item-top">
-        <span class="issue-item-num">#${i+1}</span>
+        <span class="issue-item-num">#${realIdx+1}</span>
         ${it.fixed ? '<span class="issue-item-tag">✅ Arreglado</span>' : '<span class="issue-item-tag pend">⚠️ Pendiente</span>'}
-        <button class="issue-item-del" onclick="deleteIssue(${i})" title="Borrar">🗑️</button>
+        ${editable ? `<button class="issue-item-del" onclick="deleteIssue(${realIdx})" title="Borrar">🗑️</button>` : ''}
       </div>
       <div class="issue-item-text">${escHtml(it.t)}</div>
       ${(it.by || it.d) ? `<div class="issue-item-meta">${escHtml(it.by)}${it.by && it.d ? ' · ' : ''}${escHtml(it.d)}</div>` : ''}
-      <button class="issue-item-fix ${it.fixed ? 'on' : ''}" onclick="toggleIssueFixed(${i})">
+      ${editable ? `<button class="issue-item-fix ${it.fixed ? 'on' : ''}" onclick="toggleIssueFixed(${realIdx})">
         ${it.fixed ? '↩ Marcar como pendiente' : '✅ Marcar como arreglado'}
-      </button>
-    </div>`).join('');
+      </button>` : ''}
+    </div>`;
+}
+
+function renderIssuesList() {
+  const all  = parseIssues(S.current).map((it, i) => ({ it, i }));
+  const body = document.getElementById('issues-sheet-body');
+
+  if (S.role === 'admin') {
+    // Admin: todos los reportes agrupados por rol, solo lectura.
+    const groups = [['taller','📐 Taller'],['instaladorCocina','🏠 Inst. Cocinas'],['instaladorTope','🪨 Inst. Topes'],['encargado','✅ Encargado']];
+    let html = '';
+    groups.forEach(([rid, label]) => {
+      const items = all.filter(x => x.it.role === rid);
+      if (items.length) html += `<div class="issue-group-title">${label} (${items.length})</div>` + items.map(x => issueItemHtml(x.it, x.i, false)).join('');
+    });
+    const known = groups.map(g => g[0]);
+    const legacy = all.filter(x => !known.includes(x.it.role));
+    if (legacy.length) html += `<div class="issue-group-title">🗂️ Histórico (sin rol) (${legacy.length})</div>` + legacy.map(x => issueItemHtml(x.it, x.i, false)).join('');
+    if (!html) { closeIssuesModal(); renderDetail(); return; }
+    body.innerHTML = html;
+  } else {
+    // Rol normal: solo sus propios reportes, editables.
+    const mine = all.filter(x => x.it.role === S.role);
+    if (!mine.length) { closeIssuesModal(); renderDetail(); return; }
+    body.innerHTML = mine.map(x => issueItemHtml(x.it, x.i, true)).join('');
+  }
 }
 
 async function toggleIssueFixed(i) {
   const u = S.current, r = ROLES[S.role];
   const arr = parseIssues(u);
   if (!arr[i]) return;
+  // Solo el rol dueño puede marcar/reabrir el suyo (el admin es solo lectura).
+  if (S.role === 'admin' || (arr[i].role && arr[i].role !== S.role)) { toast('Solo el rol que lo reportó puede cambiarlo'); return; }
   const nowFixed = !arr[i].fixed;
   arr[i].fixed = nowFixed;
   arr[i].fd = nowFixed ? new Date().toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric'}) : '';
@@ -1039,6 +1119,7 @@ async function deleteIssue(i) {
   const u = S.current;
   const arr = parseIssues(u);
   if (!arr[i]) return;
+  if (S.role === 'admin' || (arr[i].role && arr[i].role !== S.role)) { toast('Solo el rol que lo reportó puede borrarlo'); return; }
   arr.splice(i, 1);
   showLoading('Borrando...');
   try {
