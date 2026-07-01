@@ -479,6 +479,8 @@ const COL = {
   fabricacion:       'color_mkvna34b',     // Rectificar Medidas (Taller)
   fabricacionCocina: 'color_mm4v739t',     // Fabricación Cocina (John) — NUEVA
   materiales:        'long_text_mm4v5fyp', // Materiales a Comprar (To-Do) → dispara compra
+  inicioFab:         'date_mm4vbsmx',      // Inicio Fabricación (fecha+hora)
+  finFab:            'date_mm4vdqj',       // Fin Fabricación (fecha+hora)
   instalacionCocina: 'status',             // Entrega Cocina (Inst. Cocinas)
   instalacionTope:   'color_mkvn9ykp',     // Instalacion Tope (Inst. Topes)
   aprobacion:        'color_mkvnec2y',     // Insp. Cliente (Encargado)
@@ -1291,12 +1293,17 @@ async function handleAction() {
   // Rol de dos pasos (Fabricación: Empezar → Terminar)
   if (r.twoStep) {
     const ab = document.getElementById('action-btn');
-    const label = ab.dataset.step === 'start' ? r.startLabel : r.doneLabel;
+    const step = ab.dataset.step;
+    const label = step === 'start' ? r.startLabel : r.doneLabel;
+    const iso = new Date().toISOString();               // UTC → Monday la muestra en tu zona
+    const dt  = { date: iso.slice(0,10), time: iso.slice(11,19) };
     showLoading('Guardando...');
     try {
       await mutateColumn(u.id, r.col, { label });
+      if (step === 'start') await mutateColumn(u.id, COL.inicioFab, dt);
+      else                  await mutateColumn(u.id, COL.finFab,    dt);
       await refreshAll(); hideLoading();
-      toast(label === r.startLabel ? `${u.name}: fabricación comenzada ▶️` : `${u.name}: fabricación terminada ✅`);
+      toast(step === 'start' ? `${u.name}: fabricación comenzada ▶️` : `${u.name}: fabricación terminada ✅`);
       setTwoStepButton(ab, document.getElementById('undo-btn'), r, getColStatus(S.current, r.col));
       renderDetail(); renderUnits(S.units);
     } catch(e) { hideLoading(); toast('Error: '+e.message); }

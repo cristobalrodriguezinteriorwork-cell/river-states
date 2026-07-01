@@ -1,4 +1,4 @@
-const CACHE = 'rs-v8';
+const CACHE = 'rs-v9';
 const ASSETS = ['./index.html', './manifest.json'];
 
 self.addEventListener('install', e => {
