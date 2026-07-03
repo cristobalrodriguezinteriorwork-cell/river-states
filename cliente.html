@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>River States — Portal del Cliente</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<style>
+  :root{ --brand:#1F3864; --brand-mid:#2e4d85; --green:#00c875; --yellow:#fdab3d; --gray:#c4c4c4;
+    --red:#df2f4a; --text:#1c1f26; --text-muted:#6b7280; --bg:#eef1f6; --card:#fff; --border:#e3e7ee; }
+  *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  body{ font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--text); }
+  .screen{ display:none; min-height:100vh; } .screen.active{ display:block; }
+  .wrap{ max-width:920px; margin:0 auto; padding:16px; }
+
+  /* Login */
+  #screen-login{ display:none; place-items:center; min-height:100vh; padding:20px; }
+  #screen-login.active{ display:grid; }
+  .login-card{ background:var(--card); border-radius:18px; padding:32px 26px; width:100%; max-width:380px; text-align:center; box-shadow:0 10px 40px rgba(31,56,100,.15); }
+  .login-card img{ width:150px; margin-bottom:8px; }
+  .login-card h1{ font-size:20px; color:var(--brand); margin-bottom:4px; }
+  .login-card p{ color:var(--text-muted); font-size:13px; margin-bottom:20px; }
+  .code-input{ width:100%; font-size:22px; text-align:center; letter-spacing:4px; padding:14px; border:2px solid var(--border); border-radius:12px; margin-bottom:14px; }
+  .code-input:focus{ outline:none; border-color:var(--brand); }
+  .btn{ width:100%; background:var(--brand); color:#fff; border:none; border-radius:12px; padding:14px; font-size:16px; font-weight:700; cursor:pointer; }
+  .btn:disabled{ opacity:.6; }
+  .login-err{ color:var(--red); font-size:13px; min-height:18px; margin-top:8px; }
+
+  /* Header */
+  .top{ background:var(--brand); color:#fff; padding:16px; position:sticky; top:0; z-index:10; }
+  .top .wrap{ padding:0 16px; display:flex; align-items:center; justify-content:space-between; }
+  .top h1{ font-size:17px; } .top .role-tag{ font-size:11px; opacity:.8; }
+  .top .logout{ background:rgba(255,255,255,.15); border:none; color:#fff; border-radius:8px; padding:7px 12px; font-size:12px; cursor:pointer; }
+
+  /* KPIs */
+  .kpis{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:14px 0; }
+  .kpi{ background:var(--card); border-radius:14px; padding:14px 8px; text-align:center; border:1px solid var(--border); }
+  .kpi .n{ font-size:24px; font-weight:800; } .kpi .l{ font-size:11px; color:var(--text-muted); margin-top:2px; }
+  .kpi.big .n{ color:var(--brand); } .kpi.done .n{ color:var(--green); } .kpi.prog .n{ color:var(--yellow); } .kpi.pend .n{ color:var(--text-muted); }
+  @media(max-width:560px){ .kpis{ grid-template-columns:repeat(2,1fr);} }
+
+  /* Card */
+  .card{ background:var(--card); border-radius:16px; padding:16px; border:1px solid var(--border); margin-bottom:14px; }
+  .card h2{ font-size:15px; margin-bottom:10px; color:var(--brand); }
+
+  /* Plano */
+  .legend{ display:flex; gap:14px; flex-wrap:wrap; font-size:12px; color:var(--text-muted); margin-bottom:10px; }
+  .legend i{ width:12px; height:12px; border-radius:50%; display:inline-block; vertical-align:-1px; margin-right:4px; }
+  .plano-scroll{ overflow:auto; border:1px solid var(--border); border-radius:12px; background:#fff; max-height:70vh; }
+  .plano-stage{ position:relative; width:100%; }
+  #plano-canvas{ display:block; width:100%; height:auto; }
+  .marker{ position:absolute; width:14px; height:14px; border-radius:50%; border:2px solid #fff; transform:translate(-50%,-50%); box-shadow:0 1px 3px rgba(0,0,0,.4); }
+  .plano-tools{ display:flex; gap:8px; margin-top:8px; }
+  .plano-tools button{ background:var(--brand); color:#fff; border:none; border-radius:8px; width:40px; height:36px; font-size:18px; cursor:pointer; }
+
+  /* Units list */
+  .search{ width:100%; padding:11px 12px; border:1px solid var(--border); border-radius:10px; margin-bottom:10px; font-size:14px; }
+  .units{ display:grid; grid-template-columns:repeat(auto-fill,minmax(90px,1fr)); gap:8px; }
+  .unit{ position:relative; border:1px solid var(--border); border-radius:12px; padding:12px 6px; text-align:center; cursor:pointer; background:#fff; }
+  .unit .dot{ width:10px; height:10px; border-radius:50%; display:inline-block; margin-bottom:4px; }
+  .unit .u-name{ font-weight:700; font-size:15px; } .unit .u-pct{ font-size:11px; color:var(--text-muted); }
+  .unit .u-warn{ position:absolute; top:5px; right:6px; font-size:12px; }
+
+  /* Modal */
+  .modal{ display:none; position:fixed; inset:0; background:rgba(20,25,40,.55); z-index:50; padding:16px; overflow:auto; }
+  .modal.active{ display:block; }
+  .modal-card{ background:#fff; border-radius:18px; max-width:560px; margin:24px auto; padding:20px; }
+  .modal-card h2{ color:var(--brand); font-size:19px; margin-bottom:2px; }
+  .modal-close{ float:right; background:none; border:none; font-size:24px; cursor:pointer; color:var(--text-muted); line-height:1; }
+  .stage-row{ display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid var(--border); font-size:14px; }
+  .badge{ font-size:11px; font-weight:700; padding:3px 9px; border-radius:20px; color:#fff; }
+  .badge.done{ background:var(--green);} .badge.progress{ background:var(--yellow);} .badge.pending{ background:var(--gray); color:#555;}
+  .g-item{ border:1px solid var(--border); border-radius:12px; padding:12px; margin-top:10px; }
+  .g-item.fixed{ border-color:var(--green); background:#f2fdf7; }
+  .g-desc{ font-weight:600; font-size:14px; } .g-meta{ font-size:12px; color:var(--text-muted); margin-top:4px; line-height:1.5; }
+  .g-check{ color:var(--green); font-weight:700; font-size:13px; }
+  label{ font-size:12px; color:var(--text-muted); display:block; margin:8px 0 3px; }
+  input,textarea{ width:100%; border:1px solid var(--border); border-radius:9px; padding:10px; font-size:14px; font-family:inherit; }
+  textarea{ min-height:70px; resize:vertical; }
+  .row2{ display:flex; gap:8px; } .row2>div{ flex:1; }
+  .btn-sm{ background:var(--brand); color:#fff; border:none; border-radius:9px; padding:10px 14px; font-weight:700; cursor:pointer; font-size:14px; }
+  .btn-green{ background:var(--green); } .btn-ghost{ background:#eef1f6; color:var(--brand); }
+  .hint{ font-size:12px; color:var(--text-muted); margin:2px 0 8px; }
+
+  #loading{ display:none; position:fixed; inset:0; background:rgba(255,255,255,.7); z-index:99; place-items:center; }
+  #loading.active{ display:grid; } .spin{ width:40px; height:40px; border:4px solid var(--border); border-top-color:var(--brand); border-radius:50%; animation:s 1s linear infinite; }
+  @keyframes s{ to{ transform:rotate(360deg);} }
+  #toast{ position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#1c1f26; color:#fff; padding:11px 18px; border-radius:10px; font-size:13px; z-index:100; opacity:0; transition:.3s; pointer-events:none; }
+  #toast.show{ opacity:1; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="screen-login" class="screen active">
+  <div class="login-card">
+    <img src="logo.png" alt="Wood Studio">
+    <h1>River States</h1>
+    <p>Portal de seguimiento · ingresa tu código de acceso</p>
+    <input id="code" class="code-input" type="password" inputmode="numeric" placeholder="• • • •" autocomplete="off">
+    <button class="btn" id="login-btn" onclick="login()">Entrar</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="screen-dash" class="screen">
+  <div class="top"><div class="wrap">
+    <div><h1 id="proj-name">River States</h1><div class="role-tag" id="role-tag"></div></div>
+    <button class="logout" onclick="logout()">Salir</button>
+  </div></div>
+  <div class="wrap">
+    <div class="kpis">
+      <div class="kpi big"><div class="n" id="k-pct">—</div><div class="l">Avance general</div></div>
+      <div class="kpi done"><div class="n" id="k-done">—</div><div class="l">Listas</div></div>
+      <div class="kpi prog"><div class="n" id="k-prog">—</div><div class="l">En proceso</div></div>
+      <div class="kpi pend"><div class="n" id="k-pend">—</div><div class="l">Pendientes</div></div>
+    </div>
+
+    <div class="card">
+      <h2>📍 Plano del proyecto</h2>
+      <div class="legend">
+        <span><i style="background:var(--green)"></i>Lista</span>
+        <span><i style="background:var(--yellow)"></i>En proceso</span>
+        <span><i style="background:var(--gray)"></i>Pendiente</span>
+      </div>
+      <div class="plano-scroll" id="plano-scroll">
+        <div class="plano-stage" id="plano-stage"><canvas id="plano-canvas"></canvas></div>
+      </div>
+      <div class="plano-tools">
+        <button onclick="planoZoom(-1)">−</button><button onclick="planoZoom(1)">+</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>🏠 Unidades</h2>
+      <input class="search" id="search" placeholder="Buscar unidad (ej: 42)" oninput="renderUnits()">
+      <div class="units" id="units"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL UNIDAD -->
+<div class="modal" id="modal"><div class="modal-card">
+  <button class="modal-close" onclick="closeModal()">×</button>
+  <h2 id="m-title">Unidad</h2>
+  <div id="m-stages"></div>
+  <div id="m-garantias"></div>
+</div></div>
+
+<div id="loading"><div class="spin"></div></div>
+<div id="toast"></div>
+
+<script>
+const API = '/.netlify/functions/portal';
+const S = { code:null, role:null, units:[], current:null, planoZoom:1 };
+
+// Posiciones de las 128 casas [x%, y%] (calibradas 25-jun-2026)
+const HOUSE_POS = {"1":[62.6,38.9],"2":[61.3,43.6],"3":[60,47.8],"4":[59.2,51.8],"5":[57.8,55.9],"6":[56.8,60.4],"7":[63.3,61.5],"8":[64.2,57.3],"9":[65.2,53],"10":[66.5,48.3],"11":[67.5,44.3],"12":[68.5,40.1],"13":[69.9,35.8],"14":[73.2,34.2],"15":[72,38.8],"16":[70.6,43.6],"17":[69.3,48.1],"18":[68.2,52.7],"19":[67.2,57.5],"20":[65.9,62.2],"21":[70.7,67.9],"22":[72,63.7],"23":[73.1,59.3],"24":[74.1,54.8],"25":[75.2,50.5],"26":[76.3,46.6],"27":[77.4,41.9],"28":[78.6,37.8],"29":[80,43.7],"30":[79,48.3],"31":[77.4,53.1],"32":[76.5,58],"33":[75.3,62.7],"34":[74.1,67.3],"35":[79.2,71.8],"36":[80.3,67.1],"37":[81.7,62.5],"38":[82.8,57.9],"39":[84,53.2],"40":[85.1,48.5],"41":[87.6,51.1],"42":[86.4,55.8],"43":[85.1,60.5],"44":[83.9,65.1],"45":[82.7,69.7],"46":[81.5,73.8],"47":[87.6,75],"48":[88.9,71.1],"49":[90,66.4],"50":[91.1,62.4],"51":[92.5,70.4],"52":[91.6,74.7],"53":[90.5,79],"54":[96.4,80],"55":[97.6,75.8],"56":[98.6,71.6],"57":[41.8,30.9],"58":[39.8,35],"59":[38.3,39.3],"60":[36.4,43.2],"61":[34.1,47.2],"62":[32,50],"63":[29.4,53.2],"64":[27,56.3],"65":[24.5,58.7],"66":[28.8,66.3],"67":[31,62.6],"68":[33.6,59.6],"69":[36.3,56],"70":[38.5,53],"71":[40.6,49.6],"72":[42.4,45.9],"73":[45,48.5],"74":[43.1,52.6],"75":[40.7,56.3],"76":[38.4,59.9],"77":[35.8,63.1],"78":[33.3,66.3],"79":[30.8,69.3],"80":[35.4,77],"81":[37.4,73.3],"82":[40,69.9],"83":[42.5,66.5],"84":[44.9,62.7],"85":[47.1,59.3],"86":[49.3,55.4],"87":[51.4,51.3],"88":[45.7,38.7],"89":[47.5,33.9],"90":[33.3,24.9],"91":[31.8,29],"92":[29.9,32.7],"93":[27.9,36.7],"94":[25.6,39.8],"95":[23.3,42.9],"96":[20.9,46.1],"97":[18.6,48.8],"98":[23.5,53.9],"99":[26.1,51],"100":[28.8,47.3],"101":[31,44.5],"102":[33.3,40.9],"103":[35.1,37.2],"104":[36.9,33],"105":[38.7,29],"106":[25.2,17.3],"107":[23.5,21.8],"108":[21.6,25.6],"109":[19.6,29.1],"110":[17.3,32.4],"111":[14.6,35.6],"112":[16.9,44.6],"113":[19.5,41.1],"114":[21.9,38],"115":[24.2,35.1],"116":[26.5,31.4],"117":[28.4,27.1],"118":[30.1,22.9],"119":[7.9,7.2],"120":[8.4,13.6],"121":[12.1,14.1],"122":[15.4,15.3],"123":[12.3,19.3],"124":[12.8,30.2],"125":[16.8,27.3],"126":[18.6,23.5],"127":[20.5,19.3],"128":[22.4,15.2]};
+const PLANO_PDF = 'Planta General de River State Lotes Nueva.pdf';
+
+if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+// ── Helpers de estado ──
+function stStatus(t){ t=(t||'').toLowerCase();
+  if(['terminado','satisfecho','done'].includes(t)) return 'done';
+  if(['','sin comenzar','sin realizar','a realizar','a comenzar','sin empezar'].includes(t)) return 'pending';
+  return 'progress'; }
+function stLabel(s){ return s==='done'?'Completado':s==='progress'?'En proceso':'Pendiente'; }
+const STAGES = [['fabricacion','Fabricación'],['cocina','Instalación Cocina'],['tope','Instalación Tope'],['inspContrat','Insp. Contratista'],['inspCliente','Insp. Cliente']];
+function unitPct(u){ let d=0; STAGES.forEach(([k])=>{ if(stStatus(u[k])==='done') d++; }); return Math.round(d/STAGES.length*100); }
+function planoColor(u){ const c=stStatus(u.cocina), t=stStatus(u.tope);
+  if(c==='done'&&t==='done') return 'var(--green)';
+  if(c==='done'||t==='done'||c==='progress'||t==='progress'||stStatus(u.fabricacion)!=='pending') return 'var(--yellow)';
+  return 'var(--gray)'; }
+
+// ── API ──
+async function api(action, extra){
+  const res = await fetch(API,{ method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(Object.assign({ action, code:S.code }, extra||{})) });
+  const j = await res.json();
+  if(!res.ok) throw new Error(j.error||'Error');
+  return j;
+}
+
+// ── Login ──
+async function login(){
+  const code = document.getElementById('code').value.trim();
+  if(!code){ return; }
+  const btn=document.getElementById('login-btn'); btn.disabled=true;
+  document.getElementById('login-err').textContent='';
+  try{
+    const j = await api('login', { code });
+    S.code=code; S.role=j.role;
+    localStorage.setItem('rs_portal_code', code);
+    document.getElementById('role-tag').textContent = j.role==='admin' ? 'Administración · Wood Studio' : 'Cliente';
+    show('dash'); await loadData();
+  }catch(e){ document.getElementById('login-err').textContent = e.message; }
+  finally{ btn.disabled=false; }
+}
+function logout(){ localStorage.removeItem('rs_portal_code'); S.code=null; S.role=null; show('login'); document.getElementById('code').value=''; }
+
+async function loadData(){
+  loading(true);
+  try{
+    const j = await api('data');
+    S.units = j.units.sort((a,b)=>(parseInt(a.name.replace(/\D/g,''))||0)-(parseInt(b.name.replace(/\D/g,''))||0));
+    document.getElementById('proj-name').textContent = j.project || 'River States';
+    renderKPIs(); renderUnits(); renderPlano();
+  }catch(e){ toast(e.message); }
+  finally{ loading(false); }
+}
+
+// ── KPIs ──
+function renderKPIs(){
+  let done=0,prog=0,pend=0,sum=0;
+  S.units.forEach(u=>{ const p=unitPct(u); sum+=p; const col=planoColor(u);
+    if(col.includes('green')) done++; else if(col.includes('yellow')) prog++; else pend++; });
+  document.getElementById('k-pct').textContent = (S.units.length? Math.round(sum/S.units.length):0)+'%';
+  document.getElementById('k-done').textContent = done;
+  document.getElementById('k-prog').textContent = prog;
+  document.getElementById('k-pend').textContent = pend;
+}
+
+// ── Unidades ──
+function renderUnits(){
+  const q=(document.getElementById('search').value||'').toLowerCase();
+  const list = q? S.units.filter(u=>u.name.toLowerCase().includes(q)) : S.units;
+  document.getElementById('units').innerHTML = list.map(u=>{
+    const pend = (u.garantias||[]).filter(g=>!g.fixed).length;
+    return `<div class="unit" onclick="openUnit('${u.id}')">
+      ${pend?`<span class="u-warn" title="Garantías pendientes">🛠️${pend}</span>`:''}
+      <span class="dot" style="background:${planoColor(u)}"></span>
+      <div class="u-name">${u.name}</div><div class="u-pct">${unitPct(u)}%</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Plano ──
+let planoRendered=false;
+async function renderPlano(){
+  drawMarkers();
+  if(planoRendered || typeof pdfjsLib==='undefined') return;
+  try{
+    const pdf = await pdfjsLib.getDocument(encodeURI(PLANO_PDF)).promise;
+    const page = await pdf.getPage(1);
+    const base = page.getViewport({scale:1});
+    const scale = 3000/base.width;
+    const vp = page.getViewport({scale});
+    const canvas = document.getElementById('plano-canvas');
+    canvas.width=vp.width; canvas.height=vp.height;
+    await page.render({ canvasContext:canvas.getContext('2d'), viewport:vp }).promise;
+    planoRendered=true; drawMarkers();
+  }catch(e){ /* sin internet: se ven solo los puntos */ }
+}
+function drawMarkers(){
+  const stage=document.getElementById('plano-stage');
+  stage.querySelectorAll('.marker').forEach(m=>m.remove());
+  S.units.forEach(u=>{ const n=u.name.replace(/\D/g,''); const p=HOUSE_POS[n]; if(!p) return;
+    const d=document.createElement('div'); d.className='marker'; d.style.left=p[0]+'%'; d.style.top=p[1]+'%';
+    d.style.background=planoColor(u); d.title='Unidad '+u.name; d.onclick=()=>openUnit(u.id);
+    stage.appendChild(d); });
+}
+function planoZoom(dir){ S.planoZoom=Math.min(4,Math.max(1,S.planoZoom+dir*0.5));
+  const c=document.getElementById('plano-canvas'); c.style.width=(S.planoZoom*100)+'%'; }
+
+// ── Modal unidad ──
+function openUnit(id){
+  S.current = S.units.find(u=>u.id===id); if(!S.current) return;
+  document.getElementById('m-title').textContent = 'Unidad '+S.current.name+' · '+unitPct(S.current)+'% avance';
+  document.getElementById('m-stages').innerHTML = STAGES.map(([k,lbl])=>{
+    const s=stStatus(S.current[k]);
+    return `<div class="stage-row"><span>${lbl}</span><span class="badge ${s}">${stLabel(s)}</span></div>`;
+  }).join('');
+  renderGarantias();
+  document.getElementById('modal').classList.add('active');
+}
+function closeModal(){ document.getElementById('modal').classList.remove('active'); }
+
+function renderGarantias(){
+  const u=S.current, list=u.garantias||[];
+  let html = `<h2 style="margin-top:18px;">🛠️ Garantías</h2>`;
+  html += list.length ? list.map(g=>{
+    const visita = g.visitDate ? `📅 Visita: ${g.visitDate}${g.visitTime?' '+g.visitTime:''}` : '⏳ Visita por programar';
+    let admin='';
+    if(S.role==='admin'){
+      admin = `<div class="row2" style="margin-top:8px;">
+          <div><label>Fecha visita</label><input type="date" value="${g.visitDate||''}" id="vd-${g.id}"></div>
+          <div><label>Hora</label><input type="time" value="${g.visitTime||''}" id="vt-${g.id}"></div>
+        </div>
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <button class="btn-sm btn-ghost" onclick="saveVisit('${g.id}')">Guardar visita</button>
+          ${g.fixed
+            ? `<button class="btn-sm btn-ghost" onclick="toggleFixed('${g.id}',false)">Reabrir</button>`
+            : `<button class="btn-sm btn-green" onclick="toggleFixed('${g.id}',true)">✓ Marcar arreglado</button>`}
+        </div>`;
+    }
+    return `<div class="g-item ${g.fixed?'fixed':''}">
+      <div class="g-desc">${g.fixed?'✅ ':''}${esc(g.desc)}</div>
+      <div class="g-meta">
+        ${g.recibe?`Recibe: ${esc(g.recibe)}`:''}${g.tel?` · ☎ ${esc(g.tel)}`:''}<br>
+        ${visita}${g.fixed?`<br><span class="g-check">✓ Arreglada${g.fixedDate?' · '+g.fixedDate.slice(0,10):''}</span>`:''}
+      </div>${admin}
+    </div>`;
+  }).join('') : `<p class="hint">Aún no hay garantías reportadas para esta unidad.</p>`;
+
+  // Cliente y admin pueden reportar
+  html += `<div class="g-item" style="border-style:dashed; margin-top:14px;">
+    <label>Reportar una garantía nueva</label>
+    <textarea id="g-desc" placeholder="Describe el problema (ej: gotea el fregadero de la cocina)"></textarea>
+    <div class="row2">
+      <div><label>Quién nos recibe</label><input id="g-recibe" placeholder="Nombre"></div>
+      <div><label>Teléfono</label><input id="g-tel" inputmode="tel" placeholder="787-000-0000"></div>
+    </div>
+    <button class="btn-sm" style="margin-top:10px;" onclick="reportGarantia()">📩 Enviar garantía</button>
+  </div>`;
+  document.getElementById('m-garantias').innerHTML = html;
+}
+
+async function reportGarantia(){
+  const desc=document.getElementById('g-desc').value.trim();
+  if(!desc){ toast('Escribe la descripción'); return; }
+  loading(true);
+  try{
+    await api('addGarantia',{ unitId:S.current.id, desc,
+      recibe:document.getElementById('g-recibe').value.trim(), tel:document.getElementById('g-tel').value.trim() });
+    await refreshUnit(); toast('Garantía enviada ✅');
+  }catch(e){ toast(e.message); } finally{ loading(false); }
+}
+async function saveVisit(gid){
+  loading(true);
+  try{ await api('updateGarantia',{ unitId:S.current.id, garantiaId:gid,
+      visitDate:document.getElementById('vd-'+gid).value, visitTime:document.getElementById('vt-'+gid).value });
+    await refreshUnit(); toast('Visita guardada'); }
+  catch(e){ toast(e.message); } finally{ loading(false); }
+}
+async function toggleFixed(gid, val){
+  loading(true);
+  try{ await api('updateGarantia',{ unitId:S.current.id, garantiaId:gid, fixed:val });
+    await refreshUnit(); toast(val?'Marcada como arreglada ✓':'Reabierta'); }
+  catch(e){ toast(e.message); } finally{ loading(false); }
+}
+async function refreshUnit(){
+  const j = await api('data');
+  S.units = j.units.sort((a,b)=>(parseInt(a.name.replace(/\D/g,''))||0)-(parseInt(b.name.replace(/\D/g,''))||0));
+  S.current = S.units.find(u=>u.id===S.current.id);
+  renderKPIs(); renderUnits(); drawMarkers(); renderGarantias();
+}
+
+// ── UI utils ──
+function show(name){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active'); }
+function loading(on){ document.getElementById('loading').classList.toggle('active', on); }
+let toastT; function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2600); }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+
+// Auto-login si ya entró antes
+window.addEventListener('load', ()=>{
+  const saved = localStorage.getItem('rs_portal_code');
+  if(saved){ document.getElementById('code').value=saved; login(); }
+  document.getElementById('code').addEventListener('keydown', e=>{ if(e.key==='Enter') login(); });
+});
+</script>
+</body>
+</html>
