@@ -18,6 +18,8 @@ const COL = {
   tope:        'color_mkvn9ykp',    // Instalación Tope
   inspContrat: 'color_mkvnz58a',    // Insp. Contratista
   inspCliente: 'color_mkvnec2y',    // Insp. Cliente
+  factura:     'color_mkvtcn90',    // FACTURA (FACTURADO / NO FACTURADO) — solo admin
+  monto:       'numeric_mm50xgdr',  // Monto por Casa — solo admin
   garantias:   'long_text_mm4xrxs8',// Garantías (lista JSON)
 };
 
@@ -88,7 +90,7 @@ exports.handler = async (event) => {
 
     // ── DATA: unidades + estados + garantías ──
     if (body.action === 'data') {
-      const q = `{ boards(ids: [${BOARD_ID}]) { name items_page(limit: 500) { items { id name group { title } column_values(ids: ["${COL.fabricacion}","${COL.cocina}","${COL.tope}","${COL.inspContrat}","${COL.inspCliente}","${COL.garantias}"]) { id text } } } } }`;
+      const q = `{ boards(ids: [${BOARD_ID}]) { name items_page(limit: 500) { items { id name group { title } column_values(ids: ["${COL.fabricacion}","${COL.cocina}","${COL.tope}","${COL.inspContrat}","${COL.inspCliente}","${COL.factura}","${COL.monto}","${COL.garantias}"]) { id text } } } } }`;
       const data  = await mondayGQL(q);
       const board = data.boards[0];
       const units = board.items_page.items.map(it => ({
@@ -101,6 +103,7 @@ exports.handler = async (event) => {
         inspContrat: colText(it, COL.inspContrat),
         inspCliente: colText(it, COL.inspCliente),
         garantias:   parseGarantias(colText(it, COL.garantias)),
+        ...(role === 'admin' ? { factura: colText(it, COL.factura), monto: colText(it, COL.monto) } : {}),
       }));
       return { statusCode: 200, headers: H, body: JSON.stringify({ project: board.name, role, units }) };
     }
@@ -133,6 +136,17 @@ exports.handler = async (event) => {
       if (visitTime !== undefined) g.visitTime = visitTime;
       if (fixed     !== undefined) { g.fixed = !!fixed; g.fixedDate = fixed ? new Date().toISOString() : ''; }
       await saveGarantias(unitId, arr);
+      return { statusCode: 200, headers: H, body: JSON.stringify({ ok: true }) };
+    }
+
+    // ── FIJAR MONTO POR CASA (solo admin) ──
+    if (body.action === 'setMonto') {
+      if (role !== 'admin') return { statusCode: 403, headers: H, body: JSON.stringify({ error: 'Solo administración' }) };
+      const val = String(body.monto == null ? '' : body.monto).replace(/[^0-9.]/g, '');
+      await mondayGQL(
+        `mutation($b:ID!,$i:ID!,$c:String!,$v:String!){ change_simple_column_value(board_id:$b,item_id:$i,column_id:$c,value:$v){ id } }`,
+        { b: String(BOARD_ID), i: String(body.unitId), c: COL.monto, v: val }
+      );
       return { statusCode: 200, headers: H, body: JSON.stringify({ ok: true }) };
     }
 
