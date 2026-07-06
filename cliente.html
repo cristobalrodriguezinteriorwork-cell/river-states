@@ -115,6 +115,7 @@
       <div class="kpi done"><div class="n" id="k-done">—</div><div class="l">Listas</div></div>
       <div class="kpi prog"><div class="n" id="k-prog">—</div><div class="l">En proceso</div></div>
       <div class="kpi pend"><div class="n" id="k-pend">—</div><div class="l">Pendientes</div></div>
+      <div class="kpi done" id="k-fact-box" style="display:none;"><div class="n" id="k-fact">—</div><div class="l">Facturado a hoy</div></div>
     </div>
 
     <div class="card" id="billing-card" style="display:none;">
@@ -155,6 +156,7 @@
   <div id="m-stages"></div>
   <div id="m-billing"></div>
   <div id="m-garantias"></div>
+  <div id="m-fotos"></div>
 </div></div>
 
 <div id="loading"><div class="spin"></div></div>
@@ -235,8 +237,9 @@ function renderKPIs(){
 const money = n => '$'+(Math.round(n)).toLocaleString('en-US');
 function renderBilling(){
   const card=document.getElementById('billing-card');
-  if(S.role!=='admin'){ card.style.display='none'; return; }
-  card.style.display='';
+  const factBox=document.getElementById('k-fact-box');
+  if(S.role!=='admin'){ card.style.display='none'; factBox.style.display='none'; return; }
+  card.style.display=''; factBox.style.display='';
   let total=0, fact=0, count=0;
   S.units.forEach(u=>{ const m=parseFloat(String(u.monto||'').replace(/[^0-9.]/g,''))||0;
     if(m>0) count++; total+=m;
@@ -245,6 +248,7 @@ function renderBilling(){
   document.getElementById('b-fact').textContent =money(fact);
   document.getElementById('b-pend').textContent =money(total-fact);
   document.getElementById('b-count').textContent=count;
+  document.getElementById('k-fact').textContent =money(fact);
 }
 
 // ── Unidades ──
@@ -314,6 +318,7 @@ function openUnit(id){
   }).join('');
   renderModalBilling();
   renderGarantias();
+  loadFotos();
   document.getElementById('modal').classList.add('active');
 }
 function closeModal(){ document.getElementById('modal').classList.remove('active'); }
@@ -405,6 +410,65 @@ async function refreshUnit(){
   S.units = j.units.sort((a,b)=>(parseInt(a.name.replace(/\D/g,''))||0)-(parseInt(b.name.replace(/\D/g,''))||0));
   S.current = S.units.find(u=>u.id===S.current.id);
   renderKPIs(); renderBilling(); renderUnits(); drawMarkers(); renderModalBilling(); renderGarantias();
+}
+
+// ── Fotos de garantía ──
+async function loadFotos(){
+  const el=document.getElementById('m-fotos');
+  el.innerHTML = `<h2 style="margin-top:18px;">📷 Fotos y archivos</h2><p class="hint">Cargando…</p>`+fotoUploadHTML();
+  try{ const j=await api('fotos',{ unitId:S.current.id }); renderFotos(j.photos||[]); }
+  catch(e){ renderFotos([]); }
+}
+function fotoUploadHTML(){
+  return `<div class="g-item" style="border-style:dashed;margin-top:10px;">
+    <label>Subir foto o archivo de la garantía</label>
+    <input type="file" id="foto-input" accept="image/*,.pdf,.doc,.docx,.txt" onchange="subirFoto()">
+    <p class="hint">Una foto (cámara/galería) o un archivo (PDF, Word, escrito…). Se guarda en Monday. Máx ~5 MB.</p>
+  </div>`;
+}
+function renderFotos(items){
+  const el=document.getElementById('m-fotos');
+  const isImg = n => /\.(jpe?g|png|gif|webp|heic|bmp)$/i.test(n||'');
+  const cells = items.length
+    ? `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;">`+
+      items.map(p=> isImg(p.name)
+        ? `<a href="${p.url}" target="_blank" rel="noopener"><img src="${p.url}" alt="${esc(p.name||'')}" style="width:82px;height:82px;object-fit:cover;border-radius:8px;border:1px solid var(--border);"></a>`
+        : `<a href="${p.url}" target="_blank" rel="noopener" style="width:82px;height:82px;border:1px solid var(--border);border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-decoration:none;color:var(--brand);padding:4px;text-align:center;"><span style="font-size:24px;">📄</span><span style="margin-top:2px;font-size:10px;word-break:break-all;line-height:1.1;">${esc((p.name||'archivo').slice(0,16))}</span></a>`
+      ).join('')+`</div>`
+    : `<p class="hint">Aún no hay fotos ni archivos.</p>`;
+  el.innerHTML = `<h2 style="margin-top:18px;">📷 Fotos y archivos</h2>${cells}${fotoUploadHTML()}`;
+}
+async function subirFoto(){
+  const inp=document.getElementById('foto-input');
+  const file=inp && inp.files && inp.files[0]; if(!file) return;
+  loading(true);
+  try{
+    const b64=await fileToB64(file);
+    if(b64.length > 5500000){ toast('El archivo es muy grande (máx ~5 MB)'); return; }
+    await api('uploadFoto',{ unitId:S.current.id, filename:(file.name||'archivo'), dataBase64:b64 });
+    toast('Subido ✅'); await loadFotos();
+  }catch(e){ toast(e.message||'Error subiendo el archivo'); } finally{ loading(false); }
+}
+function fileToB64(file){
+  if(file.type && file.type.startsWith('image/')) return compressImage(file);   // fotos: se comprimen
+  return new Promise((resolve,reject)=>{                                          // otros archivos: tal cual
+    const r=new FileReader();
+    r.onload=()=>resolve(String(r.result).split(',')[1]);
+    r.onerror=()=>reject(new Error('No se pudo leer el archivo'));
+    r.readAsDataURL(file);
+  });
+}
+function compressImage(file){
+  return new Promise((resolve,reject)=>{
+    const img=new Image(), u=URL.createObjectURL(file);
+    img.onload=()=>{ const MAX=1400; let w=img.naturalWidth,h=img.naturalHeight;
+      if(w>MAX||h>MAX){ const r=Math.min(MAX/w,MAX/h); w=Math.round(w*r); h=Math.round(h*r); }
+      const c=document.createElement('canvas'); c.width=w; c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h); URL.revokeObjectURL(u);
+      resolve(c.toDataURL('image/jpeg',0.82).split(',')[1]); };
+    img.onerror=()=>{ URL.revokeObjectURL(u); reject(new Error('No se pudo leer la imagen')); };
+    img.src=u;
+  });
 }
 
 // ── UI utils ──

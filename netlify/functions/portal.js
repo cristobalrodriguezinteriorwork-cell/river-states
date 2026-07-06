@@ -21,6 +21,7 @@ const COL = {
   factura:     'color_mkvtcn90',    // FACTURA (FACTURADO / NO FACTURADO) — solo admin
   monto:       'numeric_mm50xgdr',  // Monto por Casa — solo admin
   garantias:   'long_text_mm4xrxs8',// Garantías (lista JSON)
+  fotos:       'file_mm506858',     // Fotos Garantía (archivos que sube el cliente)
 };
 
 async function mondayGQL(query, variables) {
@@ -35,6 +36,27 @@ async function mondayGQL(query, variables) {
   });
   const json = await res.json();
   if (json.errors) throw new Error(json.errors[0].message || 'Error Monday');
+  return json.data;
+}
+
+// Sube un archivo a Monday (multipart al endpoint /v2/file). Formato documentado por Monday.
+async function uploadToMonday(mutation, buffer, filename, mime) {
+  const boundary = '----portal' + Date.now();
+  const CRLF = '\r\n';
+  const head = Buffer.from(
+    `--${boundary}${CRLF}Content-Disposition: form-data; name="query"${CRLF}${CRLF}${mutation}${CRLF}` +
+    `--${boundary}${CRLF}Content-Disposition: form-data; name="variables[file]"; filename="${filename}"${CRLF}Content-Type: ${mime}${CRLF}${CRLF}`,
+    'utf8'
+  );
+  const tail = Buffer.from(`${CRLF}--${boundary}--${CRLF}`, 'utf8');
+  const body = Buffer.concat([head, buffer, tail]);
+  const res = await fetch('https://api.monday.com/v2/file', {
+    method: 'POST',
+    headers: { 'Authorization': process.env.MONDAY_TOKEN, 'Content-Type': `multipart/form-data; boundary=${boundary}` },
+    body
+  });
+  const json = await res.json();
+  if (json.errors) throw new Error(json.errors[0].message || 'Error subiendo archivo');
   return json.data;
 }
 
@@ -136,6 +158,32 @@ exports.handler = async (event) => {
       if (visitTime !== undefined) g.visitTime = visitTime;
       if (fixed     !== undefined) { g.fixed = !!fixed; g.fixedDate = fixed ? new Date().toISOString() : ''; }
       await saveGarantias(unitId, arr);
+      return { statusCode: 200, headers: H, body: JSON.stringify({ ok: true }) };
+    }
+
+    // ── FOTOS de garantía: LISTAR (cliente o admin) ──
+    if (body.action === 'fotos') {
+      const d = await mondayGQL(`{ items(ids: [${Number(body.unitId)}]) { column_values(ids: ["${COL.fotos}"]) { value } } }`);
+      let files = [];
+      try { files = (JSON.parse(d.items[0].column_values[0].value) || {}).files || []; } catch (e) {}
+      const ids = files.map(f => f.assetId).filter(Boolean);
+      if (!ids.length) return { statusCode: 200, headers: H, body: JSON.stringify({ photos: [] }) };
+      const a = await mondayGQL(`{ assets(ids: [${ids.join(',')}]) { id name public_url } }`);
+      const photos = (a.assets || []).map(x => ({ url: x.public_url, name: x.name }));
+      return { statusCode: 200, headers: H, body: JSON.stringify({ photos }) };
+    }
+
+    // ── SUBIR foto/archivo de garantía (cliente o admin) ──
+    if (body.action === 'uploadFoto') {
+      const { unitId, filename, dataBase64 } = body;
+      if (!unitId || !dataBase64) return { statusCode: 400, headers: H, body: JSON.stringify({ error: 'Falta el archivo' }) };
+      const buffer = Buffer.from(dataBase64, 'base64');
+      const name = String(filename || 'archivo').replace(/[^\w.\-]/g, '_').slice(0, 80);
+      const ext = (name.split('.').pop() || '').toLowerCase();
+      const MIMES = { jpg:'image/jpeg', jpeg:'image/jpeg', png:'image/png', gif:'image/gif', webp:'image/webp', pdf:'application/pdf', doc:'application/msword', docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document', txt:'text/plain' };
+      const mime = MIMES[ext] || 'application/octet-stream';
+      const mutation = `mutation add_file($file: File!) { add_file_to_column (item_id: ${Number(unitId)}, column_id: "${COL.fotos}", file: $file) { id } }`;
+      await uploadToMonday(mutation, buffer, name, mime);
       return { statusCode: 200, headers: H, body: JSON.stringify({ ok: true }) };
     }
 
