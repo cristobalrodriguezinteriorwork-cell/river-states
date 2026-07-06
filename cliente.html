@@ -46,7 +46,7 @@
   /* Plano */
   .legend{ display:flex; gap:14px; flex-wrap:wrap; font-size:12px; color:var(--text-muted); margin-bottom:10px; }
   .legend i{ width:12px; height:12px; border-radius:50%; display:inline-block; vertical-align:-1px; margin-right:4px; }
-  .plano-scroll{ overflow:auto; border:1px solid var(--border); border-radius:12px; background:#fff; max-height:70vh; }
+  .plano-scroll{ overflow:auto; border:1px solid var(--border); border-radius:12px; background:#fff; max-height:70vh; touch-action:pan-x pan-y; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
   .plano-stage{ position:relative; width:100%; }
   #plano-canvas{ display:block; width:100%; height:auto; }
   .marker{ position:absolute; width:14px; height:14px; border-radius:50%; border:2px solid #fff; transform:translate(-50%,-50%); box-shadow:0 1px 3px rgba(0,0,0,.4); }
@@ -117,6 +117,16 @@
       <div class="kpi pend"><div class="n" id="k-pend">—</div><div class="l">Pendientes</div></div>
     </div>
 
+    <div class="card" id="billing-card" style="display:none;">
+      <h2>💰 Facturación <span style="font-size:11px;color:var(--text-muted);font-weight:400;">(solo administración)</span></h2>
+      <div class="kpis" style="margin:0;">
+        <div class="kpi big"><div class="n" id="b-total">—</div><div class="l">Total a facturar</div></div>
+        <div class="kpi done"><div class="n" id="b-fact">—</div><div class="l">Facturado</div></div>
+        <div class="kpi prog"><div class="n" id="b-pend">—</div><div class="l">Pendiente</div></div>
+        <div class="kpi"><div class="n" id="b-count">—</div><div class="l">Casas con monto</div></div>
+      </div>
+    </div>
+
     <div class="card">
       <h2>📍 Plano del proyecto</h2>
       <div class="legend">
@@ -127,9 +137,7 @@
       <div class="plano-scroll" id="plano-scroll">
         <div class="plano-stage" id="plano-stage"><canvas id="plano-canvas"></canvas></div>
       </div>
-      <div class="plano-tools">
-        <button onclick="planoZoom(-1)">−</button><button onclick="planoZoom(1)">+</button>
-      </div>
+      <p class="hint" style="text-align:center;margin-top:6px;">👆 Pellizca con dos dedos para acercar/alejar · arrastra para moverte (doble toque = reiniciar)</p>
     </div>
 
     <div class="card">
@@ -145,6 +153,7 @@
   <button class="modal-close" onclick="closeModal()">×</button>
   <h2 id="m-title">Unidad</h2>
   <div id="m-stages"></div>
+  <div id="m-billing"></div>
   <div id="m-garantias"></div>
 </div></div>
 
@@ -206,7 +215,7 @@ async function loadData(){
     const j = await api('data');
     S.units = j.units.sort((a,b)=>(parseInt(a.name.replace(/\D/g,''))||0)-(parseInt(b.name.replace(/\D/g,''))||0));
     document.getElementById('proj-name').textContent = j.project || 'River States';
-    renderKPIs(); renderUnits(); renderPlano();
+    renderKPIs(); renderBilling(); renderUnits(); renderPlano(); initPlanoPinch();
   }catch(e){ toast(e.message); }
   finally{ loading(false); }
 }
@@ -220,6 +229,22 @@ function renderKPIs(){
   document.getElementById('k-done').textContent = done;
   document.getElementById('k-prog').textContent = prog;
   document.getElementById('k-pend').textContent = pend;
+}
+
+// ── Facturación (solo admin) ──
+const money = n => '$'+(Math.round(n)).toLocaleString('en-US');
+function renderBilling(){
+  const card=document.getElementById('billing-card');
+  if(S.role!=='admin'){ card.style.display='none'; return; }
+  card.style.display='';
+  let total=0, fact=0, count=0;
+  S.units.forEach(u=>{ const m=parseFloat(String(u.monto||'').replace(/[^0-9.]/g,''))||0;
+    if(m>0) count++; total+=m;
+    if(String(u.factura||'').trim().toUpperCase()==='FACTURADO') fact+=m; });
+  document.getElementById('b-total').textContent=money(total);
+  document.getElementById('b-fact').textContent =money(fact);
+  document.getElementById('b-pend').textContent =money(total-fact);
+  document.getElementById('b-count').textContent=count;
 }
 
 // ── Unidades ──
@@ -261,8 +286,23 @@ function drawMarkers(){
     d.style.background=planoColor(u); d.title='Unidad '+u.name; d.onclick=()=>openUnit(u.id);
     stage.appendChild(d); });
 }
-function planoZoom(dir){ S.planoZoom=Math.min(4,Math.max(1,S.planoZoom+dir*0.5));
-  const c=document.getElementById('plano-canvas'); c.style.width=(S.planoZoom*100)+'%'; }
+// Zoom del plano con pellizco (pinch). Escala el STAGE completo (canvas + puntos juntos),
+// así los números y los marcadores quedan siempre alineados.
+let planoScale = 1;
+function applyPlanoScale(k){
+  planoScale = Math.min(5, Math.max(1, k));
+  document.getElementById('plano-stage').style.width = (planoScale*100)+'%';
+}
+function initPlanoPinch(){
+  const sc = document.getElementById('plano-scroll');
+  if(!sc || sc._pinchInit) return; sc._pinchInit = true;
+  let startDist=0, startScale=1;
+  const dist = t => Math.hypot(t[0].clientX-t[1].clientX, t[0].clientY-t[1].clientY);
+  sc.addEventListener('touchstart', e=>{ if(e.touches.length===2){ startDist=dist(e.touches); startScale=planoScale; } }, {passive:true});
+  sc.addEventListener('touchmove', e=>{ if(e.touches.length===2 && startDist){ e.preventDefault(); applyPlanoScale(startScale * dist(e.touches)/startDist); } }, {passive:false});
+  sc.addEventListener('wheel', e=>{ if(e.ctrlKey){ e.preventDefault(); applyPlanoScale(planoScale - e.deltaY*0.003); } }, {passive:false});   // desktop: Ctrl+rueda
+  sc.addEventListener('dblclick', ()=> applyPlanoScale(1));                                                                                  // doble clic/toque: reiniciar
+}
 
 // ── Modal unidad ──
 function openUnit(id){
@@ -272,10 +312,30 @@ function openUnit(id){
     const s=stStatus(S.current[k]);
     return `<div class="stage-row"><span>${lbl}</span><span class="badge ${s}">${stLabel(s)}</span></div>`;
   }).join('');
+  renderModalBilling();
   renderGarantias();
   document.getElementById('modal').classList.add('active');
 }
 function closeModal(){ document.getElementById('modal').classList.remove('active'); }
+
+function renderModalBilling(){
+  const el=document.getElementById('m-billing');
+  if(S.role!=='admin'){ el.innerHTML=''; return; }
+  const u=S.current;
+  el.innerHTML = `<h2 style="margin-top:18px;">💰 Facturación <span style="font-size:11px;color:var(--text-muted);font-weight:400;">(interno)</span></h2>
+    <div class="stage-row"><span>Estado factura</span><span>${esc(u.factura||'—')}</span></div>
+    <label>Monto por casa ($)</label>
+    <div class="row2" style="align-items:flex-end;">
+      <div><input id="monto-input" inputmode="decimal" placeholder="Ej: 12000" value="${esc(u.monto||'')}"></div>
+      <button class="btn-sm" onclick="saveMonto()">Guardar monto</button>
+    </div>`;
+}
+async function saveMonto(){
+  loading(true);
+  try{ await api('setMonto',{ unitId:S.current.id, monto:document.getElementById('monto-input').value });
+    await refreshUnit(); toast('Monto guardado'); }
+  catch(e){ toast(e.message); } finally{ loading(false); }
+}
 
 function renderGarantias(){
   const u=S.current, list=u.garantias||[];
@@ -344,7 +404,7 @@ async function refreshUnit(){
   const j = await api('data');
   S.units = j.units.sort((a,b)=>(parseInt(a.name.replace(/\D/g,''))||0)-(parseInt(b.name.replace(/\D/g,''))||0));
   S.current = S.units.find(u=>u.id===S.current.id);
-  renderKPIs(); renderUnits(); drawMarkers(); renderGarantias();
+  renderKPIs(); renderBilling(); renderUnits(); drawMarkers(); renderModalBilling(); renderGarantias();
 }
 
 // ── UI utils ──
