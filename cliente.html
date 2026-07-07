@@ -138,7 +138,11 @@
       <div class="plano-scroll" id="plano-scroll">
         <div class="plano-stage" id="plano-stage"><canvas id="plano-canvas"></canvas></div>
       </div>
-      <p class="hint" style="text-align:center;margin-top:6px;">👆 Pellizca con dos dedos para acercar/alejar · arrastra para moverte (doble toque = reiniciar)</p>
+      <div style="display:flex;gap:8px;justify-content:center;align-items:center;margin-top:8px;">
+        <button class="btn-sm btn-ghost" style="width:46px;font-size:20px;line-height:1;" onclick="applyPlanoScale(planoScale-0.5)">−</button>
+        <button class="btn-sm btn-ghost" style="width:46px;font-size:20px;line-height:1;" onclick="applyPlanoScale(planoScale+0.5)">+</button>
+      </div>
+      <p class="hint" style="text-align:center;margin-top:6px;">📱 En el celular: pellizca con dos dedos · 💻 en computadora: usa + / − (o Ctrl+rueda) · doble toque = reiniciar</p>
     </div>
 
     <div class="card">
