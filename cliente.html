@@ -378,14 +378,19 @@ function renderGarantias(){
   let html = `<h2 style="margin-top:18px;">🛠️ Garantías</h2>`;
   html += list.length ? list.map(g=>{
     const visita = g.visitDate ? `📅 Visita: ${g.visitDate}${g.visitTime?' '+g.visitTime:''}` : '⏳ Visita por programar';
+    const repara = g.repairDate ? `🔧 Reparación: ${g.repairDate}${g.repairTime?' '+g.repairTime:''}` : '🔧 Reparación por programar';
     let admin='';
     if(S.role==='admin'){
       admin = `<div class="row2" style="margin-top:8px;">
           <div><label>Fecha visita</label><input type="date" value="${g.visitDate||''}" id="vd-${g.id}"></div>
           <div><label>Hora</label><input type="time" value="${g.visitTime||''}" id="vt-${g.id}"></div>
         </div>
+        <div class="row2" style="margin-top:8px;">
+          <div><label>Fecha reparación (empleados)</label><input type="date" value="${g.repairDate||''}" id="rd-${g.id}"></div>
+          <div><label>Hora</label><input type="time" value="${g.repairTime||''}" id="rt-${g.id}"></div>
+        </div>
         <div style="display:flex; gap:8px; margin-top:8px;">
-          <button class="btn-sm btn-ghost" onclick="saveVisit('${g.id}')">Guardar visita</button>
+          <button class="btn-sm btn-ghost" onclick="saveVisit('${g.id}')">Guardar fechas</button>
           ${g.fixed
             ? `<button class="btn-sm btn-ghost" onclick="toggleFixed('${g.id}',false)">Reabrir</button>`
             : `<button class="btn-sm btn-green" onclick="toggleFixed('${g.id}',true)">✓ Marcar arreglado</button>`}
@@ -395,7 +400,7 @@ function renderGarantias(){
       <div class="g-desc">${g.fixed?'✅ ':''}${esc(g.desc)}</div>
       <div class="g-meta">
         ${g.recibe?`Recibe: ${esc(g.recibe)}`:''}${g.tel?` · ☎ ${esc(g.tel)}`:''}<br>
-        ${visita}${g.fixed?`<br><span class="g-check">✓ Arreglada${g.fixedDate?' · '+g.fixedDate.slice(0,10):''}</span>`:''}
+        ${visita}<br>${repara}${g.fixed?`<br><span class="g-check">✓ Arreglada${g.fixedDate?' · '+g.fixedDate.slice(0,10):''}</span>`:''}
       </div>${admin}
     </div>`;
   }).join('') : `<p class="hint">Aún no hay garantías reportadas para esta unidad.</p>`;
@@ -426,8 +431,9 @@ async function reportGarantia(){
 async function saveVisit(gid){
   loading(true);
   try{ await api('updateGarantia',{ unitId:S.current.id, garantiaId:gid,
-      visitDate:document.getElementById('vd-'+gid).value, visitTime:document.getElementById('vt-'+gid).value });
-    await refreshUnit(); toast('Visita guardada'); }
+      visitDate:document.getElementById('vd-'+gid).value,  visitTime:document.getElementById('vt-'+gid).value,
+      repairDate:document.getElementById('rd-'+gid).value, repairTime:document.getElementById('rt-'+gid).value });
+    await refreshUnit(); toast('Fechas guardadas'); }
   catch(e){ toast(e.message); } finally{ loading(false); }
 }
 async function toggleFixed(gid, val){

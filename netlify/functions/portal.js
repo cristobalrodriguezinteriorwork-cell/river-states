@@ -150,12 +150,14 @@ exports.handler = async (event) => {
     // ── ACTUALIZAR GARANTÍA (solo admin: visita + arreglado) ──
     if (body.action === 'updateGarantia') {
       if (role !== 'admin') return { statusCode: 403, headers: H, body: JSON.stringify({ error: 'Solo administración' }) };
-      const { unitId, garantiaId, visitDate, visitTime, fixed } = body;
+      const { unitId, garantiaId, visitDate, visitTime, repairDate, repairTime, fixed } = body;
       const arr = await readGarantias(unitId);
       const g = arr.find(x => String(x.id) === String(garantiaId));
       if (!g) return { statusCode: 404, headers: H, body: JSON.stringify({ error: 'Garantía no encontrada' }) };
-      if (visitDate !== undefined) g.visitDate = visitDate;
-      if (visitTime !== undefined) g.visitTime = visitTime;
+      if (visitDate  !== undefined) g.visitDate  = visitDate;
+      if (visitTime  !== undefined) g.visitTime  = visitTime;
+      if (repairDate !== undefined) g.repairDate = repairDate;
+      if (repairTime !== undefined) g.repairTime = repairTime;
       if (fixed     !== undefined) { g.fixed = !!fixed; g.fixedDate = fixed ? new Date().toISOString() : ''; }
       await saveGarantias(unitId, arr);
       return { statusCode: 200, headers: H, body: JSON.stringify({ ok: true }) };
