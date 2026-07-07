@@ -49,7 +49,14 @@
   .plano-scroll{ overflow:auto; border:1px solid var(--border); border-radius:12px; background:#fff; max-height:70vh; touch-action:pan-x pan-y; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
   .plano-stage{ position:relative; width:100%; }
   #plano-canvas{ display:block; width:100%; height:auto; }
-  .marker{ position:absolute; width:14px; height:14px; border-radius:50%; border:2px solid #fff; transform:translate(-50%,-50%); box-shadow:0 1px 3px rgba(0,0,0,.4); }
+  .marker{ position:absolute; width:22px; height:22px; border-radius:50%; border:2px solid #fff; transform:translate(-50%,-50%); box-shadow:0 1px 3px rgba(0,0,0,.45); display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:800; color:#fff; cursor:pointer; user-select:none; }
+
+  /* Donas de facturación (admin) */
+  .donuts{ display:flex; gap:22px; justify-content:center; flex-wrap:wrap; margin-top:14px; }
+  .donut{ width:124px; height:124px; border-radius:50%; background:conic-gradient(var(--col) calc(var(--pct)*1%), #e3e7ee 0); display:grid; place-items:center; }
+  .donut-hole{ width:88px; height:88px; border-radius:50%; background:var(--card); display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .donut-hole b{ font-size:24px; line-height:1; } .donut-hole span{ font-size:11px; color:var(--text-muted); margin-top:2px; }
+  .donut-label{ text-align:center; font-size:12px; font-weight:700; color:var(--text-muted); margin-top:7px; }
   .plano-tools{ display:flex; gap:8px; margin-top:8px; }
   .plano-tools button{ background:var(--brand); color:#fff; border:none; border-radius:8px; width:40px; height:36px; font-size:18px; cursor:pointer; }
 
@@ -120,7 +127,17 @@
 
     <div class="card" id="billing-card" style="display:none;">
       <h2>💰 Facturación <span style="font-size:11px;color:var(--text-muted);font-weight:400;">(solo administración)</span></h2>
-      <div class="kpis" style="margin:0;">
+      <div class="donuts">
+        <div>
+          <div class="donut" id="d-fact" style="--pct:0;--col:var(--green);"><div class="donut-hole"><b id="d-fact-n">—</b><span id="d-fact-p">—</span></div></div>
+          <div class="donut-label">✅ Casas facturadas</div>
+        </div>
+        <div>
+          <div class="donut" id="d-pend" style="--pct:0;--col:var(--yellow);"><div class="donut-hole"><b id="d-pend-n">—</b><span id="d-pend-p">—</span></div></div>
+          <div class="donut-label">🧾 Faltan por facturar</div>
+        </div>
+      </div>
+      <div class="kpis" style="margin:14px 0 0;">
         <div class="kpi big"><div class="n" id="b-total">—</div><div class="l">Total a facturar</div></div>
         <div class="kpi done"><div class="n" id="b-fact">—</div><div class="l">Facturado</div></div>
         <div class="kpi prog"><div class="n" id="b-pend">—</div><div class="l">Pendiente</div></div>
@@ -244,15 +261,25 @@ function renderBilling(){
   const factBox=document.getElementById('k-fact-box');
   if(S.role!=='admin'){ card.style.display='none'; factBox.style.display='none'; return; }
   card.style.display=''; factBox.style.display='';
-  let total=0, fact=0, count=0;
+  let total=0, fact=0, count=0, casasFact=0;
   S.units.forEach(u=>{ const m=parseFloat(String(u.monto||'').replace(/[^0-9.]/g,''))||0;
     if(m>0) count++; total+=m;
-    if(String(u.factura||'').trim().toUpperCase()==='FACTURADO') fact+=m; });
+    if(String(u.factura||'').trim().toUpperCase()==='FACTURADO'){ fact+=m; casasFact++; } });
   document.getElementById('b-total').textContent=money(total);
   document.getElementById('b-fact').textContent =money(fact);
   document.getElementById('b-pend').textContent =money(total-fact);
   document.getElementById('b-count').textContent=count;
   document.getElementById('k-fact').textContent =money(fact);
+
+  // Donas: casas facturadas vs. faltan por facturar (por CANTIDAD de casas)
+  const nUnits=S.units.length||1, casasPend=(S.units.length||0)-casasFact;
+  const pF=Math.round(casasFact/nUnits*100), pP=Math.round(casasPend/nUnits*100);
+  document.getElementById('d-fact').style.setProperty('--pct', pF);
+  document.getElementById('d-fact-n').textContent=casasFact;
+  document.getElementById('d-fact-p').textContent=pF+'% de '+S.units.length;
+  document.getElementById('d-pend').style.setProperty('--pct', pP);
+  document.getElementById('d-pend-n').textContent=casasPend;
+  document.getElementById('d-pend-p').textContent=pP+'% de '+S.units.length;
 }
 
 // ── Unidades ──
@@ -291,7 +318,7 @@ function drawMarkers(){
   stage.querySelectorAll('.marker').forEach(m=>m.remove());
   S.units.forEach(u=>{ const n=u.name.replace(/\D/g,''); const p=HOUSE_POS[n]; if(!p) return;
     const d=document.createElement('div'); d.className='marker'; d.style.left=p[0]+'%'; d.style.top=p[1]+'%';
-    d.style.background=planoColor(u); d.title='Unidad '+u.name; d.onclick=()=>openUnit(u.id);
+    d.style.background=planoColor(u); d.title='Unidad '+u.name; d.textContent=n; d.onclick=()=>openUnit(u.id);
     stage.appendChild(d); });
 }
 // Zoom del plano con pellizco (pinch). Escala el STAGE completo (canvas + puntos juntos),
