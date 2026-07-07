@@ -132,7 +132,7 @@ exports.handler = async (event) => {
 
     // ── AGREGAR GARANTÍA (cliente o admin) ──
     if (body.action === 'addGarantia') {
-      const { unitId, desc, recibe, tel } = body;
+      const { unitId, desc, recibe, tel, repairDate, repairTime } = body;
       if (!unitId || !desc || !String(desc).trim()) return { statusCode: 400, headers: H, body: JSON.stringify({ error: 'Falta la descripción' }) };
       const arr = await readGarantias(unitId);
       arr.push({
@@ -141,7 +141,10 @@ exports.handler = async (event) => {
         recibe:    String(recibe || '').slice(0, 120).trim(),
         tel:       String(tel || '').slice(0, 40).trim(),
         d:         new Date().toISOString(),
-        visitDate: '', visitTime: '', fixed: false, fixedDate: '',
+        visitDate: '', visitTime: '',
+        repairDate: String(repairDate || '').slice(0, 10),
+        repairTime: String(repairTime || '').slice(0, 5),
+        fixed: false, fixedDate: '',
       });
       await saveGarantias(unitId, arr);
       return { statusCode: 200, headers: H, body: JSON.stringify({ ok: true }) };

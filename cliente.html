@@ -413,6 +413,11 @@ function renderGarantias(){
       <div><label>Quién nos recibe</label><input id="g-recibe" placeholder="Nombre"></div>
       <div><label>Teléfono</label><input id="g-tel" inputmode="tel" placeholder="787-000-0000"></div>
     </div>
+    <div class="row2">
+      <div><label>📆 Fecha para la reparación</label><input type="date" id="g-rdate"></div>
+      <div><label>Hora</label><input type="time" id="g-rtime"></div>
+    </div>
+    <p class="hint" style="margin:6px 0 0;">Elige el día y la hora en que podemos visitar la casa para corregir la garantía.</p>
     <button class="btn-sm" style="margin-top:10px;" onclick="reportGarantia()">📩 Enviar garantía</button>
   </div>`;
   document.getElementById('m-garantias').innerHTML = html;
@@ -424,7 +429,8 @@ async function reportGarantia(){
   loading(true);
   try{
     await api('addGarantia',{ unitId:S.current.id, desc,
-      recibe:document.getElementById('g-recibe').value.trim(), tel:document.getElementById('g-tel').value.trim() });
+      recibe:document.getElementById('g-recibe').value.trim(), tel:document.getElementById('g-tel').value.trim(),
+      repairDate:document.getElementById('g-rdate').value, repairTime:document.getElementById('g-rtime').value });
     await refreshUnit(); toast('Garantía enviada ✅');
   }catch(e){ toast(e.message); } finally{ loading(false); }
 }
