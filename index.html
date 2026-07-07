@@ -235,7 +235,7 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
 .plano-toolbar .sp { flex: 1; }
 .plano-zoom-btn, .plano-tool-btn { background: rgba(255,255,255,0.15); color: #fff; border: none; border-radius: 8px; height: 36px; min-width: 36px; padding: 0 12px; font-size: 16px; font-weight: 700; cursor: pointer; }
 .plano-count { color: rgba(255,255,255,0.8); font-size: 12px; }
-.plano-scroll { flex: 1; overflow: auto; -webkit-overflow-scrolling: touch; background: #e9eef3; }
+.plano-scroll { flex: 1; overflow: auto; -webkit-overflow-scrolling: touch; background: #e9eef3; touch-action: pan-x pan-y; overscroll-behavior: contain; }
 .plano-stage { position: relative; width: 100%; }
 .plano-stage img, .plano-stage canvas { display: block; width: 100%; height: auto; background: #fff; user-select: none; -webkit-user-drag: none; }
 .plano-markers { position: absolute; inset: 0; }
@@ -1402,6 +1402,29 @@ function planoZoom(d) {
   S.planoZoom = Math.min(5, Math.max(1, (S.planoZoom || 1) + d * 0.5));
   applyPlanoZoom();
 }
+function setPlanoZoom(k) {
+  S.planoZoom = Math.min(5, Math.max(1, k));
+  applyPlanoZoom();
+}
+// Pellizco con dos dedos (celular) + Ctrl+rueda (computadora) + doble toque = reiniciar.
+// Escala el stage completo (plano + puntos juntos), igual que los botones +/−.
+(function initPlanoPinch() {
+  const sc = document.getElementById('plano-scroll');
+  if (!sc) return;
+  let startDist = 0, startScale = 1;
+  const dist = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+  sc.addEventListener('touchstart', e => {
+    if (e.touches.length === 2) { startDist = dist(e.touches); startScale = S.planoZoom || 1; }
+  }, { passive: true });
+  sc.addEventListener('touchmove', e => {
+    if (e.touches.length === 2 && startDist) { e.preventDefault(); setPlanoZoom(startScale * dist(e.touches) / startDist); }
+  }, { passive: false });
+  sc.addEventListener('touchend', () => { startDist = 0; });
+  sc.addEventListener('wheel', e => {
+    if (e.ctrlKey) { e.preventDefault(); setPlanoZoom((S.planoZoom || 1) - e.deltaY * 0.003); }
+  }, { passive: false });
+  sc.addEventListener('dblclick', () => setPlanoZoom(1));
+})();
 
 function renderPlano() {
   const pos = (S.calib && S.calib.active) ? S.calib.pos : getPlanoPos();
