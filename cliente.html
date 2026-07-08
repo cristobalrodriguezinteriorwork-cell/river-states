@@ -81,6 +81,9 @@
   .g-item.fixed{ border-color:var(--green); background:#f2fdf7; }
   .g-desc{ font-weight:600; font-size:14px; } .g-meta{ font-size:12px; color:var(--text-muted); margin-top:4px; line-height:1.5; }
   .g-check{ color:var(--green); font-weight:700; font-size:13px; }
+  .g-checkbox{ width:28px; height:28px; border:2px solid var(--gray); border-radius:8px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:800; color:#fff; cursor:pointer; background:#fff; user-select:none; }
+  .g-checkbox.on{ background:var(--green); border-color:var(--green); }
+  .g-ini-badge{ display:inline-flex; align-items:center; gap:6px; background:#eafaf1; border:1.5px solid var(--green); color:#00794a; border-radius:9px; padding:6px 10px; font-size:13px; font-weight:700; margin-top:8px; }
   label{ font-size:12px; color:var(--text-muted); display:block; margin:8px 0 3px; }
   input,textarea{ width:100%; border:1px solid var(--border); border-radius:9px; padding:10px; font-size:14px; font-family:inherit; }
   textarea{ min-height:70px; resize:vertical; }
@@ -151,6 +154,7 @@
         <span><i style="background:var(--green)"></i>Lista</span>
         <span><i style="background:var(--yellow)"></i>En proceso</span>
         <span><i style="background:var(--gray)"></i>Pendiente</span>
+        <span><i style="background:var(--red)"></i>Garantía activa</span>
       </div>
       <div class="plano-scroll" id="plano-scroll">
         <div class="plano-stage" id="plano-stage"><canvas id="plano-canvas"></canvas></div>
@@ -205,6 +209,9 @@ function planoColor(u){ const c=stStatus(u.cocina), t=stStatus(u.tope);
   if(c==='done'&&t==='done') return 'var(--green)';
   if(c==='done'||t==='done'||c==='progress'||t==='progress'||stStatus(u.fabricacion)!=='pending') return 'var(--yellow)';
   return 'var(--gray)'; }
+// Garantía activa = reportada y aún no arreglada → el punto se pinta ROJO en el mapa
+function hasGarantiaActiva(u){ return (u.garantias||[]).some(g=>!g.fixed); }
+function markerColor(u){ return hasGarantiaActiva(u) ? 'var(--red)' : planoColor(u); }
 
 // ── API ──
 async function api(action, extra){
@@ -290,7 +297,7 @@ function renderUnits(){
     const pend = (u.garantias||[]).filter(g=>!g.fixed).length;
     return `<div class="unit" onclick="openUnit('${u.id}')">
       ${pend?`<span class="u-warn" title="Garantías pendientes">🛠️${pend}</span>`:''}
-      <span class="dot" style="background:${planoColor(u)}"></span>
+      <span class="dot" style="background:${markerColor(u)}"></span>
       <div class="u-name">${u.name}</div><div class="u-pct">${unitPct(u)}%</div>
     </div>`;
   }).join('');
@@ -318,7 +325,7 @@ function drawMarkers(){
   stage.querySelectorAll('.marker').forEach(m=>m.remove());
   S.units.forEach(u=>{ const n=u.name.replace(/\D/g,''); const p=HOUSE_POS[n]; if(!p) return;
     const d=document.createElement('div'); d.className='marker'; d.style.left=p[0]+'%'; d.style.top=p[1]+'%';
-    d.style.background=planoColor(u); d.title='Unidad '+u.name; d.textContent=n; d.onclick=()=>openUnit(u.id);
+    d.style.background=markerColor(u); d.title='Unidad '+u.name+(hasGarantiaActiva(u)?' · 🛠️ garantía activa':''); d.textContent=n; d.onclick=()=>openUnit(u.id);
     stage.appendChild(d); });
 }
 // Zoom del plano con pellizco (pinch). Escala el STAGE completo (canvas + puntos juntos),
@@ -396,12 +403,32 @@ function renderGarantias(){
             : `<button class="btn-sm btn-green" onclick="toggleFixed('${g.id}',true)">✓ Marcar arreglado</button>`}
         </div>`;
     }
+    // Recuadro (checkmark): verde cuando ya se hizo. Admin lo puede tocar para marcar/desmarcar.
+    const checkbox = `<div class="g-checkbox ${g.fixed?'on':''}"
+        onclick="${S.role==='admin' ? `toggleFixed('${g.id}',${g.fixed?'false':'true'})` : `toast('Administración la marca cuando esté arreglada')`}"
+        title="${g.fixed?'Arreglada ✓':'Pendiente'}">${g.fixed?'✓':''}</div>`;
+    // Confirmación del cliente con sus iniciales (solo cuando ya está arreglada)
+    let iniciales = '';
+    if (g.fixed) {
+      iniciales = g.clientInitials
+        ? `<div class="g-ini-badge">✍️ Cliente satisfecho · Iniciales: ${esc(g.clientInitials)}${g.initialsDate?' · '+String(g.initialsDate).slice(0,10):''}</div>`
+        : `<div class="row2" style="margin-top:8px; align-items:flex-end;">
+             <div><label>✍️ Iniciales del cliente (confirmo que quedó bien)</label>
+               <input id="ini-${g.id}" maxlength="5" placeholder="Ej: CR" style="text-transform:uppercase;"></div>
+             <button class="btn-sm btn-green" onclick="confirmSatisfaccion('${g.id}')">Confirmar</button>
+           </div>`;
+    }
     return `<div class="g-item ${g.fixed?'fixed':''}">
-      <div class="g-desc">${g.fixed?'✅ ':''}${esc(g.desc)}</div>
-      <div class="g-meta">
-        ${g.recibe?`Recibe: ${esc(g.recibe)}`:''}${g.tel?` · ☎ ${esc(g.tel)}`:''}<br>
-        ${visita}<br>${repara}${g.fixed?`<br><span class="g-check">✓ Arreglada${g.fixedDate?' · '+g.fixedDate.slice(0,10):''}</span>`:''}
-      </div>${admin}
+      <div style="display:flex; align-items:flex-start; gap:10px;">
+        ${checkbox}
+        <div style="flex:1; min-width:0;">
+          <div class="g-desc">${esc(g.desc)}</div>
+          <div class="g-meta">
+            ${g.recibe?`Recibe: ${esc(g.recibe)}`:''}${g.tel?` · ☎ ${esc(g.tel)}`:''}<br>
+            ${visita}<br>${repara}${g.fixed?`<br><span class="g-check">✓ Arreglada${g.fixedDate?' · '+g.fixedDate.slice(0,10):''}</span>`:''}
+          </div>
+        </div>
+      </div>${iniciales}${admin}
     </div>`;
   }).join('') : `<p class="hint">Aún no hay garantías reportadas para esta unidad.</p>`;
 
@@ -446,6 +473,15 @@ async function toggleFixed(gid, val){
   loading(true);
   try{ await api('updateGarantia',{ unitId:S.current.id, garantiaId:gid, fixed:val });
     await refreshUnit(); toast(val?'Marcada como arreglada ✓':'Reabierta'); }
+  catch(e){ toast(e.message); } finally{ loading(false); }
+}
+async function confirmSatisfaccion(gid){
+  const inp=document.getElementById('ini-'+gid);
+  const ini=(inp && inp.value || '').trim().toUpperCase();
+  if(!ini){ toast('Escribe tus iniciales'); return; }
+  loading(true);
+  try{ await api('confirmGarantia',{ unitId:S.current.id, garantiaId:gid, initials:ini });
+    await refreshUnit(); toast('¡Gracias! Satisfacción confirmada ✍️'); }
   catch(e){ toast(e.message); } finally{ loading(false); }
 }
 async function refreshUnit(){

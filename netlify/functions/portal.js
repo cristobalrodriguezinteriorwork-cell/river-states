@@ -161,7 +161,26 @@ exports.handler = async (event) => {
       if (visitTime  !== undefined) g.visitTime  = visitTime;
       if (repairDate !== undefined) g.repairDate = repairDate;
       if (repairTime !== undefined) g.repairTime = repairTime;
-      if (fixed     !== undefined) { g.fixed = !!fixed; g.fixedDate = fixed ? new Date().toISOString() : ''; }
+      if (fixed     !== undefined) {
+        g.fixed = !!fixed; g.fixedDate = fixed ? new Date().toISOString() : '';
+        if (!fixed) { g.clientInitials = ''; g.initialsDate = ''; }   // si se reabre, se borra la confirmación
+      }
+      await saveGarantias(unitId, arr);
+      return { statusCode: 200, headers: H, body: JSON.stringify({ ok: true }) };
+    }
+
+    // ── CONFIRMAR SATISFACCIÓN (cliente o admin): iniciales del cliente ──
+    if (body.action === 'confirmGarantia') {
+      const { unitId, garantiaId, initials } = body;
+      const ini = String(initials || '').trim().toUpperCase().slice(0, 5);
+      if (!ini)  return { statusCode: 400, headers: H, body: JSON.stringify({ error: 'Faltan las iniciales' }) };
+      const arr = await readGarantias(unitId);
+      const g = arr.find(x => String(x.id) === String(garantiaId));
+      if (!g)           return { statusCode: 404, headers: H, body: JSON.stringify({ error: 'Garantía no encontrada' }) };
+      if (!g.fixed)     return { statusCode: 400, headers: H, body: JSON.stringify({ error: 'La garantía aún no está marcada como arreglada' }) };
+      if (g.clientInitials) return { statusCode: 400, headers: H, body: JSON.stringify({ error: 'Esta garantía ya fue confirmada por el cliente' }) };
+      g.clientInitials = ini;
+      g.initialsDate   = new Date().toISOString();
       await saveGarantias(unitId, arr);
       return { statusCode: 200, headers: H, body: JSON.stringify({ ok: true }) };
     }
