@@ -230,7 +230,7 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
 .plano-legend { display: flex; gap: 14px; justify-content: center; align-items: center; padding: 8px 12px; background: var(--brand); flex-wrap: wrap; }
 .plano-legend span { display: flex; align-items: center; gap: 6px; color: #fff; font-size: 12px; font-weight: 600; }
 .plano-legend i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
-.lg-done { background: var(--green); } .lg-prog { background: var(--orange); } .lg-pend { background: #9ca3af; }
+.lg-done { background: var(--green); } .lg-prog { background: var(--orange); } .lg-pend { background: #9ca3af; } .lg-gar { background: var(--red); }
 .plano-toolbar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--brand); }
 .plano-toolbar .sp { flex: 1; }
 .plano-zoom-btn, .plano-tool-btn { background: rgba(255,255,255,0.15); color: #fff; border: none; border-radius: 8px; height: 36px; min-width: 36px; padding: 0 12px; font-size: 16px; font-weight: 700; cursor: pointer; }
@@ -241,6 +241,7 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
 .plano-markers { position: absolute; inset: 0; }
 .plano-dot { position: absolute; transform: translate(-50%,-50%); width: 22px; height: 22px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 800; color: #fff; cursor: pointer; }
 .plano-dot.done { background: var(--green); } .plano-dot.progress { background: var(--orange); } .plano-dot.pending { background: #9ca3af; }
+.plano-dot.garantia { background: var(--red); }
 .plano-dot.calib { background: var(--brand-mid); }
 .plano-stage.calibrating .plano-dot { pointer-events: none; }
 .plano-stage.calibrating img, .plano-stage.calibrating canvas { cursor: crosshair; }
@@ -399,6 +400,7 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
     <span><i class="lg-done"></i> Lista (cocina + topes)</span>
     <span><i class="lg-prog"></i> En proceso</span>
     <span><i class="lg-pend"></i> Pendiente</span>
+    <span><i class="lg-gar"></i> Garantía activa</span>
   </div>
   <div class="calib-bar" id="calib-bar" style="display:none;">
     <span class="calib-msg" id="calib-msg">Toca la casa #1</span>
@@ -489,6 +491,7 @@ const COL = {
   fechaTopes:        'date_mkvnn92k',      // Fecha Topes
   problemas:         'long_text_mkvnsrm6', // Arreglos Contratista
   problemasCliente:  'long_text_mkvn6a7',  // Arreglos Cliente
+  garantias:         'long_text_mm4xrxs8', // Garantías del portal del cliente (JSON)
 };
 
 const ROLES = {
@@ -1357,6 +1360,12 @@ function planoStatus(unit) {
   if (c === 'done' || t === 'done' || c === 'progress' || t === 'progress') return 'progress';
   return 'pending';
 }
+// Garantía activa (reportada en el portal del cliente y aún sin arreglar) → punto ROJO
+function unitGarantiaActiva(unit) {
+  const raw = getColText(unit, COL.garantias).trim();
+  if (!raw) return false;
+  try { const a = JSON.parse(raw); return Array.isArray(a) && a.some(g => !g.fixed); } catch(e) { return false; }
+}
 
 // Dibuja el PDF del plano en alta resolución sobre el canvas (vectorial = nítido al hacer zoom)
 const PLANO_PDF = 'Planta General de River State Lotes Nueva.pdf';
@@ -1436,7 +1445,7 @@ function renderPlano() {
     placed++;
     let cls = 'pending';
     if (S.calib && S.calib.active) cls = 'calib';
-    else if (byNum[n]) cls = planoStatus(byNum[n]);
+    else if (byNum[n]) cls = unitGarantiaActiva(byNum[n]) ? 'garantia' : planoStatus(byNum[n]);
     html += `<div class="plano-dot ${cls}" style="left:${p[0]}%;top:${p[1]}%;" onclick="planoDotTap('${n}')">${n}</div>`;
   });
   document.getElementById('plano-markers').innerHTML = html;
@@ -1450,7 +1459,8 @@ function planoDotTap(n) {
   if (!u) { toast('Casa ' + n); return; }
   const c = getColStatus(u, COL.instalacionCocina) === 'done' ? '✅' : '⬜';
   const t = getColStatus(u, COL.instalacionTope)   === 'done' ? '✅' : '⬜';
-  toast(`Casa ${n} — Cocina ${c}  Topes ${t}`);
+  const g = unitGarantiaActiva(u) ? '  ·  🛠️ Garantía activa' : '';
+  toast(`Casa ${n} — Cocina ${c}  Topes ${t}${g}`);
 }
 
 // ── Calibración guiada ────────────────────────────────────────────
