@@ -57,6 +57,8 @@
   .donut-hole{ width:88px; height:88px; border-radius:50%; background:var(--card); display:flex; flex-direction:column; align-items:center; justify-content:center; }
   .donut-hole b{ font-size:24px; line-height:1; } .donut-hole span{ font-size:11px; color:var(--text-muted); margin-top:2px; }
   .donut-label{ text-align:center; font-size:12px; font-weight:700; color:var(--text-muted); margin-top:7px; }
+  .billing-lock{ width:100%; background:var(--brand); color:#fff; border:none; border-radius:12px; padding:16px; font-size:16px; font-weight:800; cursor:pointer; display:flex; flex-direction:column; gap:4px; align-items:center; }
+  .billing-lock span{ font-size:12px; font-weight:400; opacity:.8; }
   .plano-tools{ display:flex; gap:8px; margin-top:8px; }
   .plano-tools button{ background:var(--brand); color:#fff; border:none; border-radius:8px; width:40px; height:36px; font-size:18px; cursor:pointer; }
 
@@ -125,10 +127,20 @@
       <div class="kpi done"><div class="n" id="k-done">—</div><div class="l">Listas</div></div>
       <div class="kpi prog"><div class="n" id="k-prog">—</div><div class="l">En proceso</div></div>
       <div class="kpi pend"><div class="n" id="k-pend">—</div><div class="l">Pendientes</div></div>
-      <div class="kpi done" id="k-fact-box" style="display:none;"><div class="n" id="k-fact">—</div><div class="l">Facturado a hoy</div></div>
     </div>
 
     <div class="card" id="billing-card" style="display:none;">
+      <div id="billing-locked">
+        <button class="billing-lock" onclick="toggleBillingPrompt()">🔒 Facturación<span>Toca para ver · requiere código de administración</span></button>
+        <div id="billing-prompt" style="display:none; margin-top:12px;">
+          <label>Vuelve a escribir tu código de administración</label>
+          <div class="row2" style="align-items:flex-end;">
+            <div><input id="billing-code" type="password" inputmode="numeric" placeholder="••••" onkeydown="if(event.key==='Enter')unlockBilling()"></div>
+            <button class="btn-sm" onclick="unlockBilling()">Ver facturación</button>
+          </div>
+        </div>
+      </div>
+      <div id="billing-content" style="display:none;">
       <h2>💰 Facturación <span style="font-size:11px;color:var(--text-muted);font-weight:400;">(solo administración)</span></h2>
       <div class="donuts">
         <div>
@@ -145,6 +157,7 @@
         <div class="kpi done"><div class="n" id="b-fact">—</div><div class="l">Facturado</div></div>
         <div class="kpi prog"><div class="n" id="b-pend">—</div><div class="l">Pendiente</div></div>
         <div class="kpi"><div class="n" id="b-count">—</div><div class="l">Casas con monto</div></div>
+      </div>
       </div>
     </div>
 
@@ -189,7 +202,7 @@
 
 <script>
 const API = '/.netlify/functions/portal';
-const S = { code:null, role:null, units:[], current:null, planoZoom:1 };
+const S = { code:null, role:null, units:[], current:null, planoZoom:1, billingUnlocked:false };
 
 // Posiciones de las 128 casas [x%, y%] (calibradas 25-jun-2026)
 const HOUSE_POS = {"1":[62.6,38.9],"2":[61.3,43.6],"3":[60,47.8],"4":[59.2,51.8],"5":[57.8,55.9],"6":[56.8,60.4],"7":[63.3,61.5],"8":[64.2,57.3],"9":[65.2,53],"10":[66.5,48.3],"11":[67.5,44.3],"12":[68.5,40.1],"13":[69.9,35.8],"14":[73.2,34.2],"15":[72,38.8],"16":[70.6,43.6],"17":[69.3,48.1],"18":[68.2,52.7],"19":[67.2,57.5],"20":[65.9,62.2],"21":[70.7,67.9],"22":[72,63.7],"23":[73.1,59.3],"24":[74.1,54.8],"25":[75.2,50.5],"26":[76.3,46.6],"27":[77.4,41.9],"28":[78.6,37.8],"29":[80,43.7],"30":[79,48.3],"31":[77.4,53.1],"32":[76.5,58],"33":[75.3,62.7],"34":[74.1,67.3],"35":[79.2,71.8],"36":[80.3,67.1],"37":[81.7,62.5],"38":[82.8,57.9],"39":[84,53.2],"40":[85.1,48.5],"41":[87.6,51.1],"42":[86.4,55.8],"43":[85.1,60.5],"44":[83.9,65.1],"45":[82.7,69.7],"46":[81.5,73.8],"47":[87.6,75],"48":[88.9,71.1],"49":[90,66.4],"50":[91.1,62.4],"51":[92.5,70.4],"52":[91.6,74.7],"53":[90.5,79],"54":[96.4,80],"55":[97.6,75.8],"56":[98.6,71.6],"57":[41.8,30.9],"58":[39.8,35],"59":[38.3,39.3],"60":[36.4,43.2],"61":[34.1,47.2],"62":[32,50],"63":[29.4,53.2],"64":[27,56.3],"65":[24.5,58.7],"66":[28.8,66.3],"67":[31,62.6],"68":[33.6,59.6],"69":[36.3,56],"70":[38.5,53],"71":[40.6,49.6],"72":[42.4,45.9],"73":[45,48.5],"74":[43.1,52.6],"75":[40.7,56.3],"76":[38.4,59.9],"77":[35.8,63.1],"78":[33.3,66.3],"79":[30.8,69.3],"80":[35.4,77],"81":[37.4,73.3],"82":[40,69.9],"83":[42.5,66.5],"84":[44.9,62.7],"85":[47.1,59.3],"86":[49.3,55.4],"87":[51.4,51.3],"88":[45.7,38.7],"89":[47.5,33.9],"90":[33.3,24.9],"91":[31.8,29],"92":[29.9,32.7],"93":[27.9,36.7],"94":[25.6,39.8],"95":[23.3,42.9],"96":[20.9,46.1],"97":[18.6,48.8],"98":[23.5,53.9],"99":[26.1,51],"100":[28.8,47.3],"101":[31,44.5],"102":[33.3,40.9],"103":[35.1,37.2],"104":[36.9,33],"105":[38.7,29],"106":[25.2,17.3],"107":[23.5,21.8],"108":[21.6,25.6],"109":[19.6,29.1],"110":[17.3,32.4],"111":[14.6,35.6],"112":[16.9,44.6],"113":[19.5,41.1],"114":[21.9,38],"115":[24.2,35.1],"116":[26.5,31.4],"117":[28.4,27.1],"118":[30.1,22.9],"119":[7.9,7.2],"120":[8.4,13.6],"121":[12.1,14.1],"122":[15.4,15.3],"123":[12.3,19.3],"124":[12.8,30.2],"125":[16.8,27.3],"126":[18.6,23.5],"127":[20.5,19.3],"128":[22.4,15.2]};
@@ -237,7 +250,7 @@ async function login(){
   }catch(e){ document.getElementById('login-err').textContent = e.message; }
   finally{ btn.disabled=false; }
 }
-function logout(){ localStorage.removeItem('rs_portal_code'); S.code=null; S.role=null; show('login'); document.getElementById('code').value=''; }
+function logout(){ localStorage.removeItem('rs_portal_code'); S.code=null; S.role=null; S.billingUnlocked=false; show('login'); document.getElementById('code').value=''; }
 
 async function loadData(){
   loading(true);
@@ -265,9 +278,12 @@ function renderKPIs(){
 const money = n => '$'+(Math.round(n)).toLocaleString('en-US');
 function renderBilling(){
   const card=document.getElementById('billing-card');
-  const factBox=document.getElementById('k-fact-box');
-  if(S.role!=='admin'){ card.style.display='none'; factBox.style.display='none'; return; }
-  card.style.display=''; factBox.style.display='';
+  if(S.role!=='admin'){ card.style.display='none'; return; }
+  card.style.display='';
+  // Bloqueado hasta que se vuelva a escribir el código de administración
+  document.getElementById('billing-locked').style.display  = S.billingUnlocked ? 'none' : '';
+  document.getElementById('billing-content').style.display = S.billingUnlocked ? '' : 'none';
+  if(!S.billingUnlocked) return;
   let total=0, fact=0, count=0, casasFact=0;
   S.units.forEach(u=>{ const m=parseFloat(String(u.monto||'').replace(/[^0-9.]/g,''))||0;
     if(m>0) count++; total+=m;
@@ -276,7 +292,6 @@ function renderBilling(){
   document.getElementById('b-fact').textContent =money(fact);
   document.getElementById('b-pend').textContent =money(total-fact);
   document.getElementById('b-count').textContent=count;
-  document.getElementById('k-fact').textContent =money(fact);
 
   // Donas: casas facturadas vs. faltan por facturar (por CANTIDAD de casas)
   const nUnits=S.units.length||1, casasPend=(S.units.length||0)-casasFact;
@@ -287,6 +302,17 @@ function renderBilling(){
   document.getElementById('d-pend').style.setProperty('--pct', pP);
   document.getElementById('d-pend-n').textContent=casasPend;
   document.getElementById('d-pend-p').textContent=pP+'% de '+S.units.length;
+}
+function toggleBillingPrompt(){
+  const p=document.getElementById('billing-prompt');
+  const abrir = p.style.display==='none';
+  p.style.display = abrir ? '' : 'none';
+  if(abrir){ const i=document.getElementById('billing-code'); i.value=''; setTimeout(()=>i.focus(),60); }
+}
+function unlockBilling(){
+  const v=(document.getElementById('billing-code').value||'').trim();
+  if(v && v===S.code){ S.billingUnlocked=true; renderBilling(); toast('Facturación desbloqueada 🔓'); }
+  else{ document.getElementById('billing-code').value=''; toast('Código incorrecto'); }
 }
 
 // ── Unidades ──
@@ -364,6 +390,10 @@ function closeModal(){ document.getElementById('modal').classList.remove('active
 function renderModalBilling(){
   const el=document.getElementById('m-billing');
   if(S.role!=='admin'){ el.innerHTML=''; return; }
+  if(!S.billingUnlocked){
+    el.innerHTML = `<p class="hint" style="margin-top:14px;">🔒 Para ver o editar el monto de esta casa, desbloquea <b>Facturación</b> en la pantalla principal.</p>`;
+    return;
+  }
   const u=S.current;
   el.innerHTML = `<h2 style="margin-top:18px;">💰 Facturación <span style="font-size:11px;color:var(--text-muted);font-weight:400;">(interno)</span></h2>
     <div class="stage-row"><span>Estado factura</span><span>${esc(u.factura||'—')}</span></div>
