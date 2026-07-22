@@ -145,6 +145,12 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
 .sig-done-banner span { display: block; font-size: 11px; font-weight: 400; opacity: 0.75; margin-top: 3px; }
 .sig-done-banner img { display: block; max-width: 100%; border-radius: 6px; margin-top: 10px; background: #fff; }
 .sig-activate-btn { width: 100%; background: var(--brand-light); border: 2px dashed var(--brand-mid); color: var(--brand); border-radius: 10px; padding: 14px; font-size: 15px; font-weight: 600; cursor: pointer; text-align: center; }
+.sig-verify { background: #f8fafc; border: 1.5px solid var(--brand-mid); border-radius: 10px; padding: 12px; margin-bottom: 10px; }
+.sig-verify label { display: block; font-size: 12px; font-weight: 700; color: var(--brand); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 6px; }
+.sig-verify input { width: 100%; border: 1.5px solid #e5e7eb; border-radius: 8px; padding: 11px; font-size: 18px; text-align: center; letter-spacing: 6px; outline: none; font-family: inherit; }
+.sig-verify input:focus { border-color: var(--brand-mid); }
+.sig-verify .hint { font-size: 11px; color: var(--text-muted); margin-top: 6px; line-height: 1.4; }
+.sig-verified-tag { display: inline-block; background: #d6e4f0; color: var(--brand); border-radius: 20px; padding: 2px 9px; font-size: 10px; font-weight: 800; letter-spacing: 0.3px; margin-top: 6px; }
 .sig-activate-btn:active { opacity: 0.8; }
 .sig-canvas-wrap { border: 2px solid var(--brand-mid); border-radius: 10px; overflow: hidden; background: #fafafa; display: none; }
 #sig-canvas { display: block; width: 100%; touch-action: none; cursor: crosshair; }
@@ -294,9 +300,6 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
     </div>
     <div class="role-card encargado"   onclick="goToPin('encargado')">
       <div class="role-icon">✅</div><div class="role-name">ENCARGADO</div><div class="role-sub">Aprobación final</div>
-    </div>
-    <div class="role-card admin" style="grid-column:1/-1;" onclick="goToPin('admin')">
-      <div class="role-icon">👑</div><div class="role-name">ADMINISTRACIÓN</div><div class="role-sub">Ver todo · todos los problemas</div>
     </div>
     <div class="role-card" style="grid-column:1/-1;border-color:var(--green);" onclick="openPlano()">
       <div class="role-icon">📍</div><div class="role-name">PLANO DEL PROYECTO</div><div class="role-sub">Mapa de casas en el sitio · sin código</div>
@@ -464,12 +467,18 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
 //  CONFIGURACIÓN — cambia aquí los PINs de cada rol
 // ═══════════════════════════════════════════════════════════════
 const PINS = {
-  taller:           '1111',   // ← PIN Taller (Medidas)
-  fabricante:       '6666',   // ← PIN Fabricación (John)
-  instaladorCocina: '2222',   // ← PIN Instalador Cocinas
-  instaladorTope:   '3333',   // ← PIN Instalador Topes
-  encargado:        '4444',   // ← PIN Encargado
-  admin:            '5555',   // ← PIN Administración (ve TODO)
+  fabricante:       '1111',   // ← Fabricación (el taller · John)
+  instaladorCocina: '3583',   // ← Instalador Cocinas
+  instaladorTope:   '7073',   // ← Instalador Topes
+  encargado:        '4444',   // ← Encargado (Alexandro — firma las aprobaciones)
+};
+
+// ═══ FIRMANTES AUTORIZADOS ═══════════════════════════════════════
+//  PIN personal (secreto, de cada persona) → nombre que queda en el acta.
+//  SOLO estas personas pueden confirmar una firma de aprobación.
+//  Para añadir a alguien: agrega una línea 'PIN': 'Nombre Apellido',
+const FIRMANTES = {
+  '9142': 'Alexandro',   // ← FALTA EL APELLIDO. Su PIN personal es 9142 (dáselo en persona).
 };
 // ═══════════════════════════════════════════════════════════════
 
@@ -893,6 +902,11 @@ function renderDetail() {
       <p>${sigSub}</p>
       <div id="sig-status"></div>
       <button id="sig-activate-btn" class="sig-activate-btn" onclick="activateSignature()">✍️ Activar Firma</button>
+      <div class="sig-verify" id="sig-verify" style="display:none;">
+        <label>🔐 PIN personal del firmante</label>
+        <input id="sig-pin" type="password" inputmode="numeric" maxlength="6" placeholder="••••" autocomplete="off">
+        <div class="hint">Identifica <b>quién</b> aprueba. Es tu PIN personal y secreto — no el del rol.</div>
+      </div>
       <div id="sig-canvas-wrap" class="sig-canvas-wrap"><canvas id="sig-canvas" height="160"></canvas></div>
       <div class="sig-actions" id="sig-actions" style="display:none;">
         <button class="btn-outline" onclick="clearSignature()">Limpiar</button>
@@ -944,18 +958,33 @@ async function loadDetailMedia(itemId) {
     if (sigStatus) {
       const sigUpd = updates.find(u => u.body?.includes('✍️'));
       if (sigUpd) {
-        const match = sigUpd.body.match(/✍️\s(.+?)\s—\sFirma.+\((.+)\)/);
-        const who  = match?.[1] || 'Encargado';
-        const when = match?.[2] || '';
+        // El body puede venir con HTML: lo pasamos a texto plano para leerlo bien.
+        const plain = String(sigUpd.body || '').replace(/<br\s*\/?>/gi, '\n').replace(/<\/p>/gi, '\n').replace(/<[^>]+>/g, '');
+        const verificada = /APROBACIÓN VERIFICADA/i.test(plain);
+        let who  = (plain.match(/Firmante:\s*(.+)/)      || [])[1];
+        let when = (plain.match(/Fecha:\s*([^(\n]+)/)    || [])[1];
+        const sello = (plain.match(/Sello de integridad:\s*(\w+)/) || [])[1];
+        const lugar = (plain.match(/Ubicación:\s*(.+)/)  || [])[1];
+        if (!who) {  // firmas viejas (formato anterior)
+          const m = plain.match(/✍️\s(.+?)\s—\sFirma.+\((.+)\)/);
+          who  = m?.[1]; when = when || m?.[2];
+        }
+        who  = (who  || 'Encargado').trim();
+        when = (when || '').trim();
         const sigAsset = sigUpd.assets?.find(a => (a.file_extension||'').toLowerCase() === 'png');
         let sigImgHtml = '';
         if (sigAsset) {
           const sigSrc = sigAsset.public_url || await fetchAsBlob(sigAsset.url);
           if (sigSrc) sigImgHtml = `<img src="${sigSrc}" alt="Firma">`;
         }
-        sigStatus.innerHTML = `<div class="sig-done-banner">✅ Firmado por ${who}${when?`<span>${when}</span>`:''}${sigImgHtml}</div>`;
-        // Ocultar botón de activar y canvas — ya está firmado
+        const extra = verificada
+          ? `<span>${lugar ? '📍 ' + lugar.trim() + '<br>' : ''}🔐 Sello: ${(sello||'').slice(0,16)}…</span>
+             <span class="sig-verified-tag">🔐 FIRMA VERIFICADA</span>`
+          : '';
+        sigStatus.innerHTML = `<div class="sig-done-banner">✅ Firmado por ${who}${when?`<span>${when}</span>`:''}${extra}${sigImgHtml}</div>`;
+        // Ocultar botón de activar, PIN y canvas — ya está firmado
         document.getElementById('sig-activate-btn')?.style && (document.getElementById('sig-activate-btn').style.display = 'none');
+        const sv = document.getElementById('sig-verify'); if (sv) sv.style.display = 'none';
         document.getElementById('sig-canvas-wrap').style.display  = 'none';
         document.getElementById('sig-actions').style.display      = 'none';
         S.sigConfirmed = true;
@@ -993,6 +1022,7 @@ function activateSignature() {
   if (S.sigConfirmed) return;
   S.sigActive = true;
   document.getElementById('sig-activate-btn').style.display = 'none';
+  document.getElementById('sig-verify').style.display       = 'block';
   document.getElementById('sig-canvas-wrap').style.display  = 'block';
   document.getElementById('sig-actions').style.display      = 'flex';
   // Re-init canvas size now that it's visible
@@ -1008,26 +1038,90 @@ function clearSignature() {
   S.sigDrawn = false;
 }
 
+// ── Evidencia de la firma (todo gratis, sin servidor extra) ──────
+// Ubicación: mejor esfuerzo. Si el celular no da permiso o no hay señal, se anota y se firma igual.
+function getGeo() {
+  return new Promise(res => {
+    if (!navigator.geolocation) return res(null);
+    let done = false;
+    const finish = v => { if (!done) { done = true; res(v); } };
+    setTimeout(() => finish(null), 8000);
+    navigator.geolocation.getCurrentPosition(
+      p => finish({ lat: p.coords.latitude, lon: p.coords.longitude, acc: Math.round(p.coords.accuracy || 0) }),
+      () => finish(null),
+      { enableHighAccuracy: true, timeout: 7000, maximumAge: 0 }
+    );
+  });
+}
+const toHex = buf => Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+async function sha256Text(str) { return toHex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str))); }
+async function sha256Blob(blob) { return toHex(await crypto.subtle.digest('SHA-256', await blob.arrayBuffer())); }
+function deviceInfo() {
+  const ua = navigator.userAgent || '';
+  const os = /iPhone|iPad|iPod/.test(ua) ? 'iPhone/iPad' : /Android/.test(ua) ? 'Android'
+           : /Windows/.test(ua) ? 'Windows' : /Mac OS/.test(ua) ? 'Mac' : 'Otro';
+  const br = /CriOS|Chrome/.test(ua) ? 'Chrome' : /FxiOS|Firefox/.test(ua) ? 'Firefox'
+           : /Safari/.test(ua) ? 'Safari' : 'Navegador';
+  return `${os} · ${br}`;
+}
+
 async function confirmSignature() {
   if (!S.sigDrawn) { toast('Dibuja tu firma primero'); return; }
   if (S.sigConfirmed) return;
 
+  // Paso 1 — Identidad: PIN personal del firmante (no el PIN del rol)
+  const pinEl = document.getElementById('sig-pin');
+  const pin   = (pinEl && pinEl.value || '').trim();
+  if (!pin) { toast('Escribe tu PIN personal para firmar'); pinEl && pinEl.focus(); return; }
+  const firmante = FIRMANTES[pin];
+  if (!firmante) {
+    if (pinEl) pinEl.value = '';
+    toast('❌ PIN personal no autorizado — no se puede firmar');
+    return;
+  }
+
   const u = S.current, r = ROLES[S.role];
   const today = new Date().toISOString().split('T')[0];
-  showLoading('Guardando firma...');
+  showLoading('Verificando y guardando firma...');
   try {
     const blob = await getSignatureBlob();
-    const uid  = await createUpdate(u.id, `✍️ ${r.name} — Firma de aprobación ${u.name} (${today})`);
-    await uploadFileToUpdate(uid, blob, `firma_${u.name.replace(/ /g,'_')}_${today}.png`);
+
+    // Paso 2 — Evidencia: ubicación (opcional), dispositivo, hora
+    const geo   = await getGeo();
+    const geoTx = geo ? `${geo.lat.toFixed(6)}, ${geo.lon.toFixed(6)} (±${geo.acc} m)` : 'no disponible (permiso denegado o sin señal)';
+    const dev   = deviceInfo();
+    const fecha = new Date().toLocaleString('es-PR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+
+    // Paso 3 — Sello de integridad: huella de la firma + de todo el paquete
+    const firmaHash = await sha256Blob(blob);
+    const sello     = await sha256Text([firmante, S.role, u.id, u.name, fecha, geoTx, dev, firmaHash].join('|'));
+
+    const acta =
+`✍️ APROBACIÓN VERIFICADA — ${u.name}
+Firmante: ${firmante}
+Rol: ${r.name}
+Fecha: ${fecha} (hora del dispositivo)
+Ubicación: ${geoTx}
+Dispositivo: ${dev}
+Huella de la firma: ${firmaHash.slice(0,32)}
+Sello de integridad: ${sello}
+
+Verificación: PIN personal del firmante.
+El sello cubre firmante, unidad, fecha, ubicación y la imagen de la firma.
+La hora oficial es la de este registro en Monday (sello del servidor).`;
+
+    const uid = await createUpdate(u.id, acta);
+    await uploadFileToUpdate(uid, blob, `firma_${firmante.replace(/ /g,'_')}_${u.name.replace(/ /g,'_')}_${today}.png`);
 
     S.sigConfirmed = true;
     S.sigActive    = false;
 
     // Lock the canvas visually
+    document.getElementById('sig-verify').style.display = 'none';
     document.getElementById('sig-canvas-wrap').style.pointerEvents = 'none';
     document.getElementById('sig-canvas-wrap').style.opacity = '0.7';
     document.getElementById('sig-actions').innerHTML =
-      `<div style="color:var(--green);font-weight:700;font-size:14px;padding:8px 0;">✅ Firma confirmada y guardada en Monday</div>`;
+      `<div style="color:var(--green);font-weight:700;font-size:14px;padding:8px 0;">✅ Firma verificada de ${firmante} — guardada en Monday</div>`;
     hideLoading();
     toast('✅ Firma guardada en Monday');
   } catch(e) {
