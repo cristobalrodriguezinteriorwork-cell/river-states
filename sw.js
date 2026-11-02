@@ -1,4 +1,4 @@
-const CACHE = 'rs-v14';
+const CACHE = 'rs-v15';
 const ASSETS = ['./index.html', './manifest.json'];
 
 self.addEventListener('install', e => {
@@ -17,7 +17,7 @@ self.addEventListener('fetch', e => {
   const req = e.request;
 
   // No interceptar las llamadas a Monday (API y archivos)
-  if (req.url.includes('monday.com')) return;
+  if (req.url.includes('monday.com') || req.url.includes('supabase.co')) return;
 
   // HTML / navegación: RED PRIMERO, caché solo como respaldo offline.
   // Así los celulares siempre reciben la versión más nueva al recargar.

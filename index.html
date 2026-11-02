@@ -281,6 +281,10 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
 .gar-check { width: 100%; margin-top: 12px; border: none; border-radius: 10px; padding: 12px; font-size: 14px; font-weight: 800; cursor: pointer; background: var(--green); color: #fff; }
 .gar-check.on { background: #e5e7eb; color: var(--text); }
 .gar-empty { text-align: center; color: var(--text-muted); font-size: 14px; padding: 40px 20px; line-height: 1.5; }
+.gar-photos { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.gar-thumb { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 1px solid #e5e7eb; }
+.gar-addphoto { width: 60px; height: 60px; border-radius: 8px; background: var(--brand-light); border: 2px dashed var(--brand-mid); color: var(--brand); font-size: 20px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; }
+.gar-addphoto span { font-size: 9px; font-weight: 700; }
 
 @media (min-width: 480px) { .units-list { grid-template-columns: repeat(8, 1fr); } }
 </style>
@@ -480,6 +484,7 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
 </div>
 
 <input type="file" id="camera-input" accept="image/*" multiple onchange="handlePhotos(event)">
+<input type="file" id="gar-camera-input" accept="image/*" style="display:none" onchange="handleGarPhoto(event)">
 
 <div id="photo-modal">
   <button id="photo-modal-close" onclick="closePhotoModal()">✕</button>
@@ -1662,6 +1667,50 @@ function copyPlanoExport() {
   } else { ta.select(); document.execCommand('copy'); toast('✅ Copiado'); }
 }
 
+// ── Supabase (fotos de garantías/reportes) ───────────────────────
+const SB_URL    = 'https://njudoffcweczpxxlttya.supabase.co';
+const SB_KEY    = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qdWRvZmZjd2VjenB4eGx0dHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgyODMxOTAsImV4cCI6MjEwMzg1OTE5MH0.Z5wRFwHuDxydkpl9qkpqm34SNDZbbYYlVvsqTR1SqK8'; // llave pública (anon) — segura para el navegador
+const SB_BUCKET = 'garantias-fotos';
+
+async function sbUploadPhoto(blob, path) {
+  const res = await fetch(`${SB_URL}/storage/v1/object/${SB_BUCKET}/${encodeURI(path)}`, {
+    method: 'POST',
+    headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'image/jpeg', 'x-upsert': 'true' },
+    body: blob
+  });
+  if (!res.ok) { let t = ''; try { t = await res.text(); } catch(_) {} throw new Error(`Supabase ${res.status} ${t.slice(0,120)}`); }
+  return `${SB_URL}/storage/v1/object/public/${SB_BUCKET}/${encodeURI(path)}`;
+}
+
+function garAddPhoto(unitId, source, idx) {
+  S.garTarget = { unitId, source, idx };
+  document.getElementById('gar-camera-input').click();
+}
+
+async function handleGarPhoto(event) {
+  const file = event.target.files && event.target.files[0];
+  event.target.value = '';
+  const t = S.garTarget;
+  if (!file || !t) return;
+  const u = (S.units || []).find(x => x.id === t.unitId);
+  if (!u) return;
+  showLoading('Subiendo foto...');
+  try {
+    const jpeg = await fileToJpeg(file);
+    const path = `${t.unitId}/${t.source}_${t.idx}_${Date.now()}.jpg`;
+    const url  = await sbUploadPhoto(jpeg, path);
+    const arr  = t.source === 'garantias' ? parseGarantiasApp(u) : parseIssues(u);
+    if (!arr[t.idx]) throw new Error('No se encontró el reporte (recarga la lista)');
+    if (!Array.isArray(arr[t.idx].photos)) arr[t.idx].photos = [];
+    arr[t.idx].photos.push(url);
+    const col = t.source === 'garantias' ? COL.garantias : COL.problemas;
+    await mutateColumn(t.unitId, col, { text: arr.length ? JSON.stringify(arr) : '' });
+    await refreshAll();
+    hideLoading(); toast('Foto guardada ✅');
+    renderGarantias();
+  } catch(e) { hideLoading(); toast('Error subiendo foto: ' + e.message); }
+}
+
 // ── Garantías y Reportes (todas las casas en un solo lugar) ──────
 function parseGarantiasApp(unit) {
   const raw = getColText(unit, COL.garantias).trim();
@@ -1691,12 +1740,14 @@ function garItems() {
     parseIssues(u).forEach((it, idx) => {
       if (!it || !it.t) return;
       items.push({ unitId: u.id, num, source: 'problemas', idx, tipo: 'reporte',
-        desc: it.t, by: it.by || it.role || '', when: it.d || '', fixed: !!it.fixed });
+        desc: it.t, by: it.by || it.role || '', when: it.d || '', fixed: !!it.fixed,
+        photos: Array.isArray(it.photos) ? it.photos : [] });
     });
     parseGarantiasApp(u).forEach((g, idx) => {
       if (!g || !g.desc) return;
       items.push({ unitId: u.id, num, source: 'garantias', idx, tipo: 'garantia',
-        desc: g.desc, by: g.recibe || '', when: (g.d || '').slice(0,10), fixed: !!g.fixed });
+        desc: g.desc, by: g.recibe || '', when: (g.d || '').slice(0,10), fixed: !!g.fixed,
+        photos: Array.isArray(g.photos) ? g.photos : [] });
     });
   });
   items.sort((a,b) => (parseInt(a.num)||0) - (parseInt(b.num)||0));
@@ -1725,6 +1776,10 @@ function renderGarantias() {
       </div>
       <div class="gar-desc">${escHtml(i.desc)}</div>
       ${(i.by || i.when) ? `<div class="gar-meta">${escHtml(i.by)}${i.by && i.when ? ' · ' : ''}${escHtml(i.when)}</div>` : ''}
+      <div class="gar-photos">
+        ${(i.photos || []).map(url => `<img class="gar-thumb" src="${url}" loading="lazy" onclick="openPhotoModal('${url}')">`).join('')}
+        <button class="gar-addphoto" onclick="garAddPhoto('${i.unitId}','${i.source}',${i.idx})">📷<span>Foto</span></button>
+      </div>
       <button class="gar-check ${i.fixed ? 'on' : ''}" onclick="toggleGarFixed('${i.unitId}','${i.source}',${i.idx})">
         ${i.fixed ? '↩ Reabrir' : '✓ Marcar arreglado'}
       </button>
